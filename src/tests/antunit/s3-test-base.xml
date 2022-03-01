@@ -1,0 +1,184 @@
+<?xml version="1.0"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<project xmlns:au="antlib:org.apache.ant.antunit"
+         xmlns:s3="antlib:org.apache.ant.s3"
+         xmlns:s3cs="antlib:org.apache.ant.s3cs"
+         xmlns:rs="antlib:org.apache.tools.ant.types.resources.selectors"
+         xmlns:if="ant:if"
+         xmlns:unless="ant:unless">
+
+  <condition property="has.antlib.classpath" value="true" else="false">
+    <isreference refid="classpath.antlib" />
+  </condition>
+
+  <path id="classpath.script">
+    <pathelement path="${java.class.path}" />
+  </path>
+
+  <sequential if:true="${has.antlib.classpath}">
+  	<typedef resource="org/apache/ant/s3/antlib.xml" uri="antlib:org.apache.ant.s3" classpathref="classpath.antlib" />
+  	<typedef resource="org/apache/ant/s3cs/antlib.xml" uri="antlib:org.apache.ant.s3cs" classpathref="classpath.antlib" />
+    <path id="classpath.script" refid="classpath.antlib" />
+  </sequential>
+
+  <presetdef name="groovy">
+    <script manager="javax" classpathref="classpath.script" language="groovy" />
+  </presetdef>
+
+  <presetdef name="gcondition">
+    <scriptcondition manager="javax" classpathref="classpath.script" language="groovy" />
+  </presetdef>
+
+  <groovy unless:set="s3.endpoint">
+    import static com.adobe.testing.s3mock.S3MockApplication.DEFAULT_HTTPS_PORT
+    project.setProperty('s3.endpoint', "https://localhost:${DEFAULT_HTTPS_PORT}")
+  </groovy>
+
+  <s3:client id="s3">
+    <credentials accesskey="foo" secretkey="bar" />
+    <http>
+      <TRUST_ALL_CERTIFICATES>true</TRUST_ALL_CERTIFICATES>
+    </http>
+    <builder endpointOverride="${s3.endpoint}" region="us-east-1" />
+  </s3:client>
+
+  <groovy>
+    import static com.adobe.testing.s3mock.S3MockApplication.DEFAULT_HTTPS_PORT
+    import static software.amazon.awssdk.http.SdkHttpConfigurationOption.TRUST_ALL_CERTIFICATES
+
+    import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+    import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+    import software.amazon.awssdk.core.sync.RequestBody
+    import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
+    import software.amazon.awssdk.regions.Region
+    import software.amazon.awssdk.services.s3.S3Client
+    import software.amazon.awssdk.utils.AttributeMap
+
+    def s3 = { ->
+      def s3Endpoint = project.getProperty('s3.endpoint')
+    
+      S3Client.builder()
+        .region(Region.of("us-east-1"))
+        .credentialsProvider(
+          StaticCredentialsProvider.create(
+            AwsBasicCredentials.create("foo", "bar")
+          )
+        )
+        .endpointOverride(URI.create(s3Endpoint))
+        .httpClient(
+          UrlConnectionHttpClient.builder().buildWithDefaults(
+            AttributeMap.builder().put(TRUST_ALL_CERTIFICATES, Boolean.TRUE).build()
+          )
+        )
+        .build()
+    }
+
+    project.addReference("s3g", s3)
+  </groovy>
+
+  <s3:object id="foo.a" bucket="foo" key="a" clientrefid="s3" />
+  <s3:object id="foo.b" bucket="foo" key="b" clientrefid="s3" />
+  <s3:object id="foo.c" bucket="foo" key="c" clientrefid="s3" />
+  <s3:object id="bar.x" bucket="bar" key="x" clientrefid="s3" />
+  <s3:object id="bar.y" bucket="bar" key="y" clientrefid="s3" />
+  <s3:object id="bar.z" bucket="bar" key="z" clientrefid="s3" />
+
+  <resources id="foo">
+    <resource refid="foo.a" />
+    <resource refid="foo.b" />
+    <resource refid="foo.c" />
+  </resources>
+
+  <resources id="bar">
+    <resource refid="bar.x" />
+    <resource refid="bar.y" />
+    <resource refid="bar.z" />
+  </resources>
+
+  <resources id="foobar">
+    <resources refid="foo" />
+    <resources refid="bar" />
+  </resources>
+
+  <macrodef name="put-test-remove">
+    <element name="files" />
+    <element name="process" />
+    <sequential>
+      <local name="rnd" />
+      <groovy>
+        def b = new byte[64]
+        new Random().nextBytes(b)
+        project.setProperty('rnd', b as String)
+      </groovy>
+      <resources refid="${rnd}">
+        <files />
+      </resources>
+      <groovy>
+        def rnd = project.getProperty('rnd')
+
+        def s3Endpoint = project.getProperty('s3.endpoint')
+        def s3 = S3Client.builder()
+          .region(Region.of("us-east-1"))
+          .credentialsProvider(
+            StaticCredentialsProvider.create(
+              AwsBasicCredentials.create("foo", "bar")
+            )
+          )
+          .endpointOverride(URI.create(s3Endpoint))
+          .httpClient(
+            UrlConnectionHttpClient.builder().buildWithDefaults(
+              AttributeMap.builder().put(TRUST_ALL_CERTIFICATES, Boolean.TRUE).build()
+            )
+          )
+          .build()
+
+        project.addReference("${rnd}.s3")
+
+        def files = project.getReference(rnd)
+        files.each {
+          // TODO put
+        }
+      </groovy>
+
+      <process />
+
+      <groovy>
+        def rnd = project.getProperty('rnd')
+        def s3 = project.getReference("${rnd}.s3")
+        def files = project.getReference(rnd)
+
+        files.each {
+          // TODO clean up
+        }
+
+		[rnd, "${rnd}.s3"].each { project.references.&amp;remove }
+      </groovy>
+    </sequential>
+  </macrodef>
+
+  <target name="antunit">
+    <antunit xmlns="antlib:org.apache.ant.antunit">
+      <propertyset>
+        <propertyref builtin="commandline" />
+      </propertyset>
+      <plainlistener />
+      <file file="${ant.file}" xmlns="antlib:org.apache.tools.ant" />
+    </antunit>
+  </target>
+
+</project>

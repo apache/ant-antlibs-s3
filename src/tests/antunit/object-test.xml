@@ -1,0 +1,284 @@
+<?xml version="1.0"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<project xmlns:au="antlib:org.apache.ant.antunit"
+         xmlns:s3="antlib:org.apache.ant.s3"
+         xmlns:s3cs="antlib:org.apache.ant.s3cs"
+         xmlns:rs="antlib:org.apache.tools.ant.types.resources.selectors"
+         xmlns:if="ant:if"
+         xmlns:unless="ant:unless"
+         default="antunit">
+
+  <import file="s3-test-base.xml" />
+
+  <macrodef name="assertSelected">
+  	<attribute name="refid" />
+  	<attribute name="negate" default="false" />
+    <element name="condition" implicit="true" />
+    <sequential>
+      <au:assertTrue>
+        <resourcecount when="eq" count="0">
+          <restrict>
+            <resources refid="@{refid}" />
+            <condition if:true="@{negate}" />
+            <rs:not unless:true="@{negate}" >
+              <condition />
+            </rs:not>
+          </restrict>
+        </resourcecount>
+      </au:assertTrue>
+    </sequential>
+  </macrodef>
+
+  <target name="testExists">
+    <assertSelected refid="foobar">
+      <rs:exists />
+    </assertSelected>
+  </target>
+
+  <target name="testNoSuchKey">
+    <resources id="assertNotExists">
+      <s3:object bucket="foo" key="nosuch" clientrefid="s3" />
+      <s3:object bucket="bar" key="nosuch" clientrefid="s3" />
+    </resources>
+
+    <assertSelected refid="assertNotExists" negate="true">
+      <rs:exists />
+    </assertSelected>
+  </target>
+
+  <target name="testSize">
+    <assertSelected refid="foobar">
+      <rs:size when="eq" size="1" />
+    </assertSelected>
+  </target>
+
+  <target name="testLastModified">
+    <tstamp>
+      <format property="modified.since" pattern="yyyyMMdd" offset="-1" unit="week" />
+    </tstamp>
+
+    <assertSelected refid="foobar">
+      <rs:date datetime="${modified.since}" pattern="yyyyMMdd" when="after" />
+    </assertSelected>
+  </target>
+
+  <target name="testContentType">
+    <assertSelected refid="foobar">
+      <s3cs:contenttype>text/plain</s3cs:contenttype>
+    </assertSelected>
+  </target>
+
+  <target name="testContent">
+    <macrodef name="assertContent">
+      <attribute name="refid" />
+      <attribute name="content" />
+      <sequential>
+      	<au:assertTrue>
+      	  <resourcesmatch>
+      	  	<resource refid="@{refid}" />
+      	    <string value="@{content}" />
+      	  </resourcesmatch>
+      	</au:assertTrue>
+      </sequential>
+    </macrodef>
+
+    <assertContent refid="foo.a" content="a" />
+    <assertContent refid="foo.b" content="b" />
+    <assertContent refid="foo.c" content="c" />
+    <assertContent refid="bar.x" content="x" />
+    <assertContent refid="bar.y" content="y" />
+    <assertContent refid="bar.z" content="z" />
+  </target>
+
+  <target name="testBucket">
+    <assertSelected refid="foo">
+      <s3cs:bucket>foo</s3cs:bucket>
+    </assertSelected>
+    <assertSelected refid="bar">
+      <s3cs:bucket>bar</s3cs:bucket>
+    </assertSelected>
+  </target>
+
+  <target name="testKey">
+    <assertSelected refid="foo.a">
+      <s3cs:key>a</s3cs:key>
+    </assertSelected>
+    <assertSelected refid="foo.b">
+      <s3cs:key>b</s3cs:key>
+    </assertSelected>
+    <assertSelected refid="foo.c">
+      <s3cs:key>c</s3cs:key>
+    </assertSelected>
+    <assertSelected refid="bar.x">
+      <s3cs:key>x</s3cs:key>
+    </assertSelected>
+    <assertSelected refid="bar.y">
+      <s3cs:key>y</s3cs:key>
+    </assertSelected>
+    <assertSelected refid="bar.z">
+      <s3cs:key>z</s3cs:key>
+    </assertSelected>
+  </target>
+
+  <macrodef name="assertMeta">
+  	<attribute name="cs" />
+  	<attribute name="match-as" />
+    <attribute name="refid" />
+    <attribute name="meta-key" />
+    <attribute name="meta-value" />
+  	<attribute name="negate" default="false" />
+    <sequential>
+      <assertSelected refid="@{refid}" negate="@{negate}">
+        <s3cs:meta key="@{meta-key}" matchas="@{match-as}" casesensitive="@{cs}">@{meta-value}</s3cs:meta>
+      </assertSelected>
+    </sequential>
+  </macrodef>
+
+  <target name="testMetaCsLiteral">
+  	<assertMeta cs="true" match-as="literal" refid="foo" meta-key="B" meta-value="foo" />
+    <assertMeta cs="true" match-as="literal" refid="foo" meta-key="B" meta-value="FOO" negate="true" />
+  	<assertMeta cs="true" match-as="literal" refid="bar" meta-key="B" meta-value="bar" />
+  	<assertMeta cs="true" match-as="literal" refid="bar" meta-key="B" meta-value="BAR" negate="true" />
+  </target>
+
+  <target name="testMetaNcsLiteral">
+  	<assertMeta cs="false" match-as="literal" refid="foo" meta-key="B" meta-value="foo" />
+  	<assertMeta cs="false" match-as="literal" refid="foo" meta-key="B" meta-value="FOO" />
+  	<assertMeta cs="false" match-as="literal" refid="bar" meta-key="B" meta-value="bar" />
+  	<assertMeta cs="false" match-as="literal" refid="bar" meta-key="B" meta-value="BAR" />
+  </target>
+
+  <target name="testMetaCsGlob">
+  	<assertMeta cs="true" match-as="glob" refid="foo" meta-key="B" meta-value="f*" />
+    <assertMeta cs="true" match-as="glob" refid="foo" meta-key="B" meta-value="F*" negate="true" />
+  	<assertMeta cs="true" match-as="glob" refid="bar" meta-key="B" meta-value="b*" />
+  	<assertMeta cs="true" match-as="glob" refid="bar" meta-key="B" meta-value="B*" negate="true" />
+  </target>
+
+  <target name="testMetaNcsGlob">
+  	<assertMeta cs="false" match-as="glob" refid="foo" meta-key="B" meta-value="f*" />
+    <assertMeta cs="false" match-as="glob" refid="foo" meta-key="B" meta-value="F*" />
+  	<assertMeta cs="false" match-as="glob" refid="bar" meta-key="B" meta-value="b*" />
+  	<assertMeta cs="false" match-as="glob" refid="bar" meta-key="B" meta-value="B*" />
+  </target>
+
+  <target name="testMetaCsRegex">
+  	<assertMeta cs="true" match-as="regex" refid="foo" meta-key="B" meta-value="fo+" />
+    <assertMeta cs="true" match-as="regex" refid="foo" meta-key="B" meta-value="FO+" negate="true" />
+  	<assertMeta cs="true" match-as="regex" refid="bar" meta-key="B" meta-value="b.*" />
+  	<assertMeta cs="true" match-as="regex" refid="bar" meta-key="B" meta-value="B.*" negate="true" />
+  </target>
+
+  <target name="testMetaNcsRegex">
+  	<assertMeta cs="false" match-as="regex" refid="foo" meta-key="B" meta-value="fo+" />
+    <assertMeta cs="false" match-as="regex" refid="foo" meta-key="B" meta-value="FO+" />
+  	<assertMeta cs="false" match-as="regex" refid="bar" meta-key="B" meta-value="b.*" />
+  	<assertMeta cs="false" match-as="regex" refid="bar" meta-key="B" meta-value="B.*" />
+  </target>
+
+  <macrodef name="assertTag">
+    <attribute name="cs" />
+    <attribute name="match-as" />
+    <attribute name="refid" />
+    <attribute name="tag-key" />
+    <attribute name="tag-value" />
+    <attribute name="negate" default="false" />
+    <sequential>
+      <assertSelected refid="@{refid}" negate="@{negate}">
+        <s3cs:tag casesensitive="@{cs}" matchas="@{match-as}" key="@{tag-key}">@{tag-value}</s3cs:tag>
+      </assertSelected>
+    </sequential>
+  </macrodef>
+
+  <target name="testTagCsLiteral">
+    <assertTag cs="true" match-as="literal" refid="foo.a" tag-key="T1" tag-value="a" />
+    <assertTag cs="true" match-as="literal" refid="foo.a" tag-key="T1" tag-value="A" negate="true" />
+    <assertTag cs="true" match-as="literal" refid="foo.b" tag-key="T1" tag-value="b" />
+    <assertTag cs="true" match-as="literal" refid="foo.b" tag-key="T1" tag-value="B" negate="true" />
+    <assertTag cs="true" match-as="literal" refid="foo.c" tag-key="T1" tag-value="c" />
+    <assertTag cs="true" match-as="literal" refid="foo.c" tag-key="T1" tag-value="C" negate="true" />
+    <assertTag cs="true" match-as="literal" refid="bar.x" tag-key="T1" tag-value="x" />
+    <assertTag cs="true" match-as="literal" refid="bar.x" tag-key="T1" tag-value="X" negate="true" />
+    <assertTag cs="true" match-as="literal" refid="bar.y" tag-key="T1" tag-value="y" />
+    <assertTag cs="true" match-as="literal" refid="bar.y" tag-key="T1" tag-value="Y" negate="true" />
+    <assertTag cs="true" match-as="literal" refid="bar.z" tag-key="T1" tag-value="z" />
+    <assertTag cs="true" match-as="literal" refid="bar.z" tag-key="T1" tag-value="Z" negate="true" />
+  </target>
+
+  <target name="testTagNcsLiteral">
+    <assertTag cs="false" match-as="literal" refid="foo.a" tag-key="T1" tag-value="a" />
+    <assertTag cs="false" match-as="literal" refid="foo.a" tag-key="T1" tag-value="A" />
+    <assertTag cs="false" match-as="literal" refid="foo.b" tag-key="T1" tag-value="b" />
+    <assertTag cs="false" match-as="literal" refid="foo.b" tag-key="T1" tag-value="B" />
+    <assertTag cs="false" match-as="literal" refid="foo.c" tag-key="T1" tag-value="c" />
+    <assertTag cs="false" match-as="literal" refid="foo.c" tag-key="T1" tag-value="C" />
+    <assertTag cs="false" match-as="literal" refid="bar.x" tag-key="T1" tag-value="x" />
+    <assertTag cs="false" match-as="literal" refid="bar.x" tag-key="T1" tag-value="X" />
+    <assertTag cs="false" match-as="literal" refid="bar.y" tag-key="T1" tag-value="y" />
+    <assertTag cs="false" match-as="literal" refid="bar.y" tag-key="T1" tag-value="Y" />
+    <assertTag cs="false" match-as="literal" refid="bar.z" tag-key="T1" tag-value="z" />
+    <assertTag cs="false" match-as="literal" refid="bar.z" tag-key="T1" tag-value="Z" />
+  </target>
+
+  <target name="testTagCsGlob">
+    <assertTag cs="true" match-as="glob" refid="foo.a" tag-key="T1" tag-value="?" />
+    <assertTag cs="true" match-as="glob" refid="foo.a" tag-key="T1" tag-value="a*" />
+    <assertTag cs="true" match-as="glob" refid="foo.a" tag-key="T1" tag-value="A*" negate="true" />
+    <assertTag cs="true" match-as="glob" refid="foo.b" tag-key="T1" tag-value="b*" />
+    <assertTag cs="true" match-as="glob" refid="foo.b" tag-key="T1" tag-value="B*" negate="true" />
+    <assertTag cs="true" match-as="glob" refid="foo.c" tag-key="T1" tag-value="c*" />
+    <assertTag cs="true" match-as="glob" refid="foo.c" tag-key="T1" tag-value="C*" negate="true" />
+    <assertTag cs="true" match-as="glob" refid="bar.x" tag-key="T1" tag-value="x*" />
+    <assertTag cs="true" match-as="glob" refid="bar.x" tag-key="T1" tag-value="X*" negate="true" />
+    <assertTag cs="true" match-as="glob" refid="bar.y" tag-key="T1" tag-value="y*" />
+    <assertTag cs="true" match-as="glob" refid="bar.y" tag-key="T1" tag-value="Y*" negate="true" />
+    <assertTag cs="true" match-as="glob" refid="bar.z" tag-key="T1" tag-value="z*" />
+    <assertTag cs="true" match-as="glob" refid="bar.z" tag-key="T1" tag-value="Z*" negate="true" />
+  </target>
+
+  <target name="testTagNcsGlob">
+    <assertTag cs="false" match-as="glob" refid="foo.a" tag-key="T1" tag-value="?" />
+    <assertTag cs="false" match-as="glob" refid="foo.a" tag-key="T1" tag-value="a*" />
+    <assertTag cs="false" match-as="glob" refid="foo.a" tag-key="T1" tag-value="A*" />
+    <assertTag cs="false" match-as="glob" refid="foo.b" tag-key="T1" tag-value="b*" />
+    <assertTag cs="false" match-as="glob" refid="foo.b" tag-key="T1" tag-value="B*" />
+    <assertTag cs="false" match-as="glob" refid="foo.c" tag-key="T1" tag-value="c*" />
+    <assertTag cs="false" match-as="glob" refid="foo.c" tag-key="T1" tag-value="C*" />
+    <assertTag cs="false" match-as="glob" refid="bar.x" tag-key="T1" tag-value="x*" />
+    <assertTag cs="false" match-as="glob" refid="bar.x" tag-key="T1" tag-value="X*" />
+    <assertTag cs="false" match-as="glob" refid="bar.y" tag-key="T1" tag-value="y*" />
+    <assertTag cs="false" match-as="glob" refid="bar.y" tag-key="T1" tag-value="Y*" />
+    <assertTag cs="false" match-as="glob" refid="bar.z" tag-key="T1" tag-value="z*" />
+    <assertTag cs="false" match-as="glob" refid="bar.z" tag-key="T1" tag-value="Z*" />
+  </target>
+
+  <target name="testTagCsRegex">
+    <assertTag cs="true" match-as="regex" refid="foo" tag-key="T1" tag-value="[abc]" />
+    <assertTag cs="true" match-as="regex" refid="foo" tag-key="T1" tag-value="[ABC]" negate="true" />
+    <assertTag cs="true" match-as="regex" refid="bar" tag-key="T1" tag-value="[xyz]" />
+    <assertTag cs="true" match-as="regex" refid="bar" tag-key="T1" tag-value="[XYZ]" negate="true" />
+  </target>
+
+  <target name="testTagNcsRegex">
+    <assertTag cs="false" match-as="regex" refid="foo" tag-key="T1" tag-value="[abc]" />
+    <assertTag cs="false" match-as="regex" refid="foo" tag-key="T1" tag-value="[ABC]" />
+    <assertTag cs="false" match-as="regex" refid="bar" tag-key="T1" tag-value="[xyz]" />
+    <assertTag cs="false" match-as="regex" refid="bar" tag-key="T1" tag-value="[XYZ]" />
+  </target>
+
+</project>

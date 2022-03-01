@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<project xmlns:au="antlib:org.apache.ant.antunit"
+         xmlns:s3="antlib:org.apache.ant.s3"
+         xmlns:s3cs="antlib:org.apache.ant.s3cs"
+         xmlns:rs="antlib:org.apache.tools.ant.types.resources.selectors"
+         xmlns:if="ant:if"
+         xmlns:unless="ant:unless"
+         default="antunit">
+
+  <import file="s3-test-base.xml" />
+
+  <target name="testSize">
+    <resourcecount property="foo.count" refid="foo" />
+    <au:assertTrue>
+      <resourcecount when="eq" count="${foo.count}">
+        <s3:objects clientrefid="s3" bucket="foo" />
+      </resourcecount>
+    </au:assertTrue>
+
+    <resourcecount property="bar.count" refid="foo" />
+    <au:assertTrue>
+      <resourcecount when="eq" count="${bar.count}">
+        <s3:objects clientrefid="s3" bucket="bar" />
+      </resourcecount>
+    </au:assertTrue>
+  </target>
+
+  <macrodef name="assertSameResources">
+    <attribute name="control" />
+    <attribute name="discriminator" default="@{control}" />
+    <element name="subject" implicit="true" />
+    <sequential>
+      <pathconvert property="path.@{discriminator}.control">
+        <sort>
+          <resources refid="@{control}" />
+        </sort>
+      </pathconvert>
+      <pathconvert property="path.@{discriminator}.subject">
+        <sort>
+          <subject />
+        </sort>
+      </pathconvert>
+      <au:assertTrue>
+        <equals arg1="${path.@{discriminator}.control}" arg2="${path.@{discriminator}.subject}" />
+      </au:assertTrue>
+    </sequential>
+  </macrodef>
+
+  <target name="testSimpleFind">
+    <assertSameResources control="foo">
+      <s3:objects clientrefid="s3" bucket="foo" />
+    </assertSameResources>
+
+    <assertSameResources control="bar">
+      <s3:objects clientrefid="s3" bucket="bar" />
+    </assertSameResources>
+  </target>
+
+</project>
