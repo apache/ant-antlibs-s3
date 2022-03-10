@@ -60,8 +60,9 @@ under the License.
 
   <target name="start-s3" depends="groovy-setup">
     <property name="s3.start" value="true" />
+    <tempfile destdir="${java.io.tmpdir}" property="s3mockRoot" prefix="antlib-s3mock-" />
     <groovy if:true="${s3.start}">
-      def s3Mock = com.adobe.testing.s3mock.S3MockApplication.start('--initialBuckets=foo,bar')
+      def s3Mock = com.adobe.testing.s3mock.S3MockApplication.start("--root=${s3mockRoot}", '--initialBuckets=foo,bar')
       project.addReference('s3Mock', s3Mock)
     </groovy>
   </target>
