@@ -246,7 +246,11 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
      *            {@link Precision}
      */
     public void setAs(Precision precision) {
-        this.as = Objects.requireNonNull(precision);
+        checkAttributesAllowed();
+        if (precision != this.as) {
+            this.as = Objects.requireNonNull(precision);
+            resetResourceCache();
+        }
     }
 
     /**
