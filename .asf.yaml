@@ -1,0 +1,4 @@
+notifications:
+  commits:      notifications@ant.apache.org
+  issues:       notifications@ant.apache.org
+  pullrequests: dev@ant.apache.org
