@@ -49,7 +49,7 @@ public class Put extends CopyResources {
      *
      * @param s3
      */
-    public void addConfigured(final Client s3) {
+    public void addConfigured(Client s3) {
         if (this.s3 != null) {
             throw new BuildException("S3 client already specified");
         }
@@ -61,7 +61,7 @@ public class Put extends CopyResources {
      *
      * @param refid
      */
-    public void setClientRefid(final String refid) {
+    public void setClientRefid(String refid) {
         Objects.requireNonNull(StringUtils.trimToNull(refid), "@clientrefid must not be null/empty/blank");
 
         addConfigured(getProject().<Client> getReference(refid));
@@ -81,7 +81,7 @@ public class Put extends CopyResources {
      *
      * @param bucket
      */
-    public void setBucket(final String bucket) {
+    public void setBucket(String bucket) {
         this.bucket = StringUtils.trimToNull(bucket);
     }
 
@@ -93,7 +93,7 @@ public class Put extends CopyResources {
      *             if {@code append == true}
      */
     @Override
-    public void setAppend(final boolean append) {
+    public void setAppend(boolean append) {
         Exceptions.raiseIf(append, buildExceptionAt(getLocation()), "@append not supported by %s", getTaskName());
     }
 
@@ -105,9 +105,31 @@ public class Put extends CopyResources {
      *             if {@code preserveLastModified == true}
      */
     @Override
-    public void setPreserveLastModified(final boolean preserveLastModified) {
+    public void setPreserveLastModified(boolean preserveLastModified) {
         Exceptions.raiseIf(preserveLastModified, buildExceptionAt(getLocation()),
             "@preserveLastModified not supported by %s", getTaskName());
+    }
+
+    /**
+     * Enforce "always overwrite."
+     * @return {@code true}
+     */
+    @Override
+    public boolean isOverwrite() {
+        return true;
+    }
+
+    /**
+     * Disable {@code overwrite}.
+     * 
+     * @param overwrite
+     * @throws BuildException
+     *             if {@code overwrite == false}
+     */
+    @Override
+    public void setOverwrite(boolean overwrite) {
+        Exceptions.raiseUnless(overwrite, buildExceptionAt(getLocation()), "%s only operates in overwrite mode",
+            getTaskName());
     }
 
     /**
@@ -136,7 +158,7 @@ public class Put extends CopyResources {
      * {@inheritDoc}
      */
     @Override
-    protected void copyResource(final Resource source, final Resource dest, final FilterSetCollection filters,
+    protected void copyResource(Resource source, Resource dest, FilterSetCollection filters,
         final Vector<FilterChain> filterChains) throws IOException {
 
         while (filterChains.isEmpty() && !filters.hasFilters()) {
