@@ -39,19 +39,17 @@ under the License.
   <target name="ready-to-test-with-antunit" depends="common.ready-to-test-with-antunit,antunit-prepare" />
 
   <target name="antunit-prepare" depends="setup-s3">
-<!--
-  	<path id="antlib.cp">
+    <path id="antlib.cp">
       <path refid="classpath.test" />
       <pathelement location="${target.jar}" />
-  	</path>
+    </path>
     <classloader classpathref="antlib.cp" />
-  	<typedef resource="org/apache/ant/s3/antlib.xml" uri="antlib:org/apache/ant/s3" classpathref="antlib.cp" />
-  	<typedef resource="org/apache/ant/s3cs/antlib.xml" uri="antlib:org/apache/ant/s3cs" classpathref="antlib.cp" />
--->
-  	<path id="classpath.antlib">
+    <typedef resource="org/apache/ant/s3/antlib.xml" uri="antlib:org/apache/ant/s3" classpathref="antlib.cp" />
+    <typedef resource="org/apache/ant/s3cs/antlib.xml" uri="antlib:org/apache/ant/s3cs" classpathref="antlib.cp" />
+    <path id="classpath.antlib">
       <path refid="classpath.test" />
       <pathelement location="${target.jar}" />
-  	</path>
+    </path>
   </target>
 
   <target name="groovy-setup" depends="resolve">
@@ -120,7 +118,7 @@ under the License.
   </target>
 
   <target name="antunit-test" depends="ready-to-test-with-antunit,resolve"
-  	    unless="skip-antunit">
+          unless="skip-antunit">
     <condition property="antunit.includes" value="${antunit.testcase}"
                else="**/test.xml,**/*-test.xml">
       <isset property="antunit.testcase" />
@@ -130,10 +128,9 @@ under the License.
 
     <mkdir dir="${antunit.report.dir}" />
 
-  	<au:antunit xmlns:au="antlib:org.apache.ant.antunit"
+    <au:antunit xmlns:au="antlib:org.apache.ant.antunit"
       failOnError="false"
-      errorProperty="antunit.tests.failed"
-      >
+      errorProperty="antunit.tests.failed">
       <fileset dir="${src.antunit}" includes="${antunit.includes}"
                excludes="${antunit.excludes}" />
 
@@ -163,11 +160,11 @@ under the License.
         println "BUCKETS: ${s3.listBuckets().buckets()}"
         println "FOO: ${s3.listObjectsV2 { b -> b.bucket('foo') }.contents()}"
         println "BAR: ${s3.listObjectsV2 { b -> b.bucket('bar') }.contents()}"
-    	println "HEAD: ${s3.headObject { b -> b.bucket('foo').key('a') }}"
-    	println "TAG: ${s3.getObjectTagging { b -> b.bucket('foo').key('a') }.tagSet()}"
+        println "HEAD: ${s3.headObject { b -> b.bucket('foo').key('a') }}"
+        println "TAG: ${s3.getObjectTagging { b -> b.bucket('foo').key('a') }.tagSet()}"
       }
     </groovy>
-  	<sequential if:true="${s3.start}">
+    <sequential if:true="${s3.start}">
       <input message="continue" />
       <groovy>
         project.getReference('s3Mock').stop()
@@ -176,8 +173,8 @@ under the License.
   </target>
 
   <target name="groovy-test" depends="groovy-setup">
-  	<groovy>
+    <groovy>
       println com.adobe.testing.s3mock.S3MockApplication.DEFAULT_HTTPS_PORT
-  	</groovy>
+    </groovy>
   </target>
 </project>
