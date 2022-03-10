@@ -157,6 +157,12 @@ public class ObjectResource extends Resource {
         this.versionId = versionId;
     }
 
+    static ObjectResource ofPrefix(Project project, S3Client s3, String bucket, String prefix) {
+        ObjectResource result = new ObjectResource(project,s3,bucket,prefix);
+        result._setDirectory(true);
+        return result;
+    }
+
     /**
      * Create a new {@link ObjectResource} fully-formed.
      *
@@ -701,4 +707,9 @@ public class ObjectResource extends Resource {
     private S3Client s3() {
         return ProjectUtils.requireComponent(getProject(), s3, Client.class);
     }
+
+    private void _setDirectory(boolean directory) {
+        super.setDirectory(directory);
+    }
 }
+

@@ -25,6 +25,7 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
@@ -61,6 +62,10 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
     static class Atom<T> {
         static Comparator<Atom<?>> COMPARATOR = Comparator.<Atom<?>, String> comparing(Atom::key)
             .thenComparing(Atom::latest).thenComparing(Atom::lastModified);
+
+        static Atom<String> asDir(S3Object o) {
+            return new Atom<String>(o.key(), o::key, () -> null, () -> true, o::lastModified, ObjectResource::ofPrefix);
+        }
 
         static Atom<S3Object> of(S3Object o) {
             return new Atom<S3Object>(o, o::key, () -> null, () -> true, o::lastModified, ObjectResource::new);
@@ -138,7 +143,7 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
 
                     return remainingDepth > 1;
                 });
-                if (canRecurse) {
+                if (canRecurse || finder.includePrefixes) {
                     this.prefixes = prefixes.stream().filter(this::allowPrefix).iterator();
                 } else {
                     this.prefixes = Collections.emptyIterator();
@@ -179,10 +184,19 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
         }
     }
 
+    private static Stream<Atom<?>> atoms(ListObjectsV2Response objects, boolean includePrefixes) {
+        return objects.contents().stream().<Atom<?>> map(o -> {
+            if (o.key().equals(objects.prefix())) {
+                return includePrefixes ? Atom.asDir(o) : null;
+            }
+            return Atom.of(o);
+        }).filter(Objects::nonNull);
+    }
+
     static class ObjectsFrame extends BaseFrame<ListObjectsV2Response, ObjectsFrame> {
 
         ObjectsFrame(S3Finder finder, ListObjectsV2Response objects) {
-            super(finder, objects, objects::prefix, objects.commonPrefixes(), objects.contents().stream().map(Atom::of),
+            super(finder, objects, objects::prefix, objects.commonPrefixes(), atoms(objects, finder.includePrefixes),
                 r -> new ObjectsFrame(finder, r));
         }
 
@@ -204,21 +218,21 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
         return versions.isTruncated() && versions.nextKeyMarker().equals(versions.keyMarker());
     }
 
-    private static Stream<Atom<?>> atoms(ListObjectVersionsResponse versions) {
+    private static Stream<Atom<?>> atoms(ListObjectVersionsResponse versions, boolean includePrefixes) {
         Stream<Atom<?>> result =
             Stream.concat(versions.deleteMarkers().stream().map(Atom::of), versions.versions().stream().map(Atom::of));
 
+        if (!includePrefixes) {
+            result = result.filter(a -> !a.key().equals(versions.prefix()));
+        }
         if (versions.isTruncated()) {
-            // attempt to to facilitate version ordering by omitting last/next
-            // key:
-
+            // attempt to facilitate version ordering by omitting last/next key:
             if (!breaksKey(versions)) {
                 final String nextKey = versions.nextKeyMarker();
                 result = result.filter(atom -> !nextKey.equals(atom.key()));
             }
         }
-        // we think plain objects listing is already sorted by key, so just sort
-        // versions atoms here:
+        // we think plain objects listing is already sorted by key, so just sort versions atoms here:
         result = result.sorted(Atom.COMPARATOR);
 
         return result;
@@ -227,8 +241,8 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
     static class VersionsFrame extends BaseFrame<ListObjectVersionsResponse, VersionsFrame> {
 
         VersionsFrame(S3Finder finder, ListObjectVersionsResponse versions) {
-            super(finder, versions, versions::prefix, versions.commonPrefixes(), atoms(versions),
-                r -> new VersionsFrame(finder, r));
+            super(finder, versions, versions::prefix, versions.commonPrefixes(),
+                atoms(versions, finder.includePrefixes), r -> new VersionsFrame(finder, r));
         }
 
         @Override
@@ -280,6 +294,7 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
     private final String delimiter;
     private final boolean caseSensitive;
     private final Pair<Set<TokenizedPattern>, Set<TokenizedPattern>> patterns;
+    private final boolean includePrefixes;
 
     /**
      * Create a new {@link S3Finder} instance.
@@ -290,15 +305,17 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
      * @param precision
      * @param delimiter
      * @param patterns
+     * @param includePrefixes
      */
     S3Finder(Project project, S3Client s3, String bucket, Precision precision, String delimiter, PatternSet patterns,
-        boolean caseSensitive) {
+        boolean caseSensitive, boolean includePrefixes) {
         this.project = project;
         this.s3 = s3;
         this.bucket = bucket;
         this.delimiter = delimiter;
         this.patterns = tokenize(patterns);
         this.caseSensitive = caseSensitive;
+        this.includePrefixes = includePrefixes;
 
         final String prefix;
         if (caseSensitive) {

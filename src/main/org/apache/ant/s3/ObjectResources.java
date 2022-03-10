@@ -49,6 +49,7 @@ import software.amazon.awssdk.services.s3.S3Client;
  * {@link ResourceCollection} of {@link ObjectResource}s.
  */
 public class ObjectResources extends S3DataType implements ResourceCollection {
+
     /**
      * Default delimiter.
      */
@@ -70,6 +71,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
 
     private volatile Optional<ResourceCollection> resourceCache;
     private volatile boolean cache = true;
+    private volatile boolean includePrefixes;
 
     /**
      * Create a new {@link ObjectResources} instance.
@@ -138,7 +140,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
             return resourceCache.get().iterator();
         }
         final S3Finder finder = new S3Finder(getProject(), s3(), require(getBucket(), "@bucket"), as,
-            require(getDelimiter(), "@delimiter"), patterns, isCaseSensitive());
+            require(getDelimiter(), "@delimiter"), patterns, isCaseSensitive(), isIncludePrefixes());
 
         final Optional<Set<ObjectResource>> cacheSet;
         if (isCache()) {
@@ -320,6 +322,29 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
     public void setCache(boolean cache) {
         this.cache = cache;
         if (!cache) {
+            resetResourceCache();
+        }
+    }
+
+    /**
+     * Learn whether to include S3 object prefixes as "directory" type
+     * {@link Resource}s, default {@code false}.
+     * 
+     * @return {@code boolean}
+     */
+    public boolean isIncludePrefixes() {
+        return includePrefixes;
+    }
+
+    /**
+     * Set whether to include S3 object prefixes as "directory" type
+     * {@link Resource}s, default {@code false}.
+     * @param includePrefixes {@code boolean}
+     */
+    public void setIncludePrefixes(boolean includePrefixes) {
+        checkAttributesAllowed();
+        if (includePrefixes != this.includePrefixes) {
+            this.includePrefixes = includePrefixes;
             resetResourceCache();
         }
     }
