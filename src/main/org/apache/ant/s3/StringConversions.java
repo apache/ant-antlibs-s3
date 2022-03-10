@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -70,6 +71,7 @@ class StringConversions {
         cnv.put(Boolean.class, Boolean::valueOf);
         cnv.put(String.class, Function.identity());
         cnv.put(Region.class, Region::of);
+        cnv.put(Duration.class, Duration::parse);
         CONVERTERS = Collections.unmodifiableMap(cnv);
     }
 
