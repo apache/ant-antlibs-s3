@@ -240,6 +240,15 @@ public class ObjectResource extends Resource {
     }
 
     /**
+     * {@inheritDoc}
+     * @throws UnsupportedOperationException
+     */
+    @Override
+    public void setDirectory(boolean directory) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * Get the precision of this object, which impacts only its name.
      * 
      * @return {@link Precision}
