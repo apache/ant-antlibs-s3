@@ -1,0 +1,96 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<html>
+  <head>
+    <meta http-equiv="Content-Language" content="en-us"></meta>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>S3 Ant Library</title>
+  </head>
+
+  <body>
+    <h2>Introduction</h2>
+
+    <p>This is a library of Ant type definitions that support working with
+       Amazon Web Services' Simple Storage Service AKA S3.</p>
+
+    <h2>Requirements</h2>
+
+    <p>The current version requires Ant 1.10.7 or later.</p>
+
+    <h2>Where is it?</h2>
+
+    <p>The source code for the library lives in the
+    ant-antlibs-s3 git repository - <a
+    href="https://gitbox.apache.org/repos/asf?p=ant-antlibs-s3.git">https://gitbox.apache.org/repos/asf/ant-antlibs-s3.git</a>.</p>
+
+    <h2>Installation</h2>
+
+    <p>If you are building this from sources, run the antlib target
+    and you'll get a file <code>ant-s3.jar</code>.</p>
+
+    <p>The defined types are named so as to encourage their use via
+       namespace declaration.  Place <code>ant-s3.jar</code>
+      into a directory and use <code>ant -lib
+      DIR-CONTAINING-THE-JAR</code> or copy it into
+      <code>ANT_HOME/lib</code> - and then in your build file, simply
+      declare the namespace on the <code>project</code> tag:
+
+      <pre>
+        &lt;project xmlns:s3="antlib:org.apache.ant.s3"&gt;
+      </pre>
+
+      ...and the types defined by this library will automatically be
+      available in the <code>s3</code> namespace.
+
+      It is planned to publish the artifact with dependency information such that
+      tools like Apache Ivy or Apache Maven can retrieve all required dependencies.
+    </p>
+
+    <h2>Supplied Tasks</h2>
+
+    <ul>
+      <li><a href="s3put.html">s3:put</a> - Put an Ant
+      <code>ResourceCollection</code> into an S3 bucket.</li>
+
+      <li><a href="s3delete.html">s3:delete</a> - Delete objects from an S3 bucket.
+      </li>
+    </ul>
+
+    <h2>Supplied Types</h2>
+
+    <ul>
+      <li><a href="s3client.html">s3:client</a> - Represents an instance
+      of the AWS SDK's <pre>AmazonS3</pre> client interface.</li>
+
+      <li><a href="s3object.html">s3:object</a> - Ant <code>Resource</code>
+      implementation representing a single S3 object.</li>
+
+      <li><a href="s3objects.html">s3:objects</a> - Ant
+      <code>ResourceCollection</code> collecting the objects located at a
+      particular bucket and prefix.</li>
+    </ul>
+
+    <h3>Custom resource comparators/selectors</h3>
+
+    A number of types are provided that implement both interfaces for use with
+    Ant's <code>sort</code> and <code>restrict</code> resource collections.
+    These are situated in a secondary Antlib namespace
+    <a href="s3compareselect.html"><code>org.apache.ant.s3cs</code></href>.
+
+    <hr/>
+  </body>
+</html>

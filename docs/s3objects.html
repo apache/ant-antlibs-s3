@@ -1,0 +1,122 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<html>
+  <head>
+    <meta http-equiv="Content-Language" content="en-us"></meta>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>S3 Objects</title>
+  </head>
+
+  <body>
+    <h2><a name="s3objects">s3:objects</a></h2>
+
+    <h3>Description</h3>
+
+    <p>Ant resource collection of <a href="s3object.html">s3:object</a>
+    resources.</p>
+
+    <h3>Parameters</h3>
+    <table border="1" cellpadding="2" cellspacing="0">
+      <tr>
+        <td valign="top"><b>Attribute</b></td>
+        <td valign="top"><b>Description</b></td>
+        <td align="center" valign="top"><b>Required</b></td>
+      </tr>
+      <tr>
+        <td valign="top">bucket</td>
+        <td valign="top">S3 bucket</td>
+        <td align="center">Yes</td>
+      </tr>
+      <tr>
+        <td valign="top">delimiter</td>
+        <td valign="top">S3 delimiter</td>
+        <td align="center">No, default <code>/</code></td>
+      </tr>
+      <tr>
+        <td valign="top">cache</td>
+        <td valign="top">Whether to cache discovered resources</td>
+        <td align="center">No, default <code>true</code></td>
+      </tr>
+      <tr>
+        <td valign="top">casesensitive</td>
+        <td valign="top">Whether the resource search is performed in a case-sensitive manner</td>
+        <td align="center">No, default <code>true</code></td>
+      </tr>
+      <tr>
+        <td valign="top">as</td>
+        <td valign="top">object precision: <code>object|version</code></td>
+        <td align="center">No, default <code>object</code></td>
+      </tr>
+      <tr>
+        <td valign="top">includeprefixes</td>
+        <td valign="top">Whether to include s3 prefix objects as directory resources</td>
+        <td align="center">No, default <code>false</code></td>
+      </tr>
+      <tr>
+        <td valign="top">clientrefid</td>
+        <td valign="top">Ant reference ID of an <a href="s3client.html">s3:client</a>
+        defined elsewhere</td>
+        <td align="center">Yes, unless a nested <code>s3:client</code> is specified</td>
+      </tr>
+      <tr>
+        <td valign="top">includes</td>
+        <td valign="top">comma-delimited include patterns</td>
+        <td align="center">No</td>
+      </tr>
+      <tr>
+        <td valign="top">includesfile</td>
+        <td valign="top">file containing line-delimited include patterns</td>
+        <td align="center">No</td>
+      </tr>
+      <tr>
+        <td valign="top">excludes</td>
+        <td valign="top">comma-delimited exclude patterns</td>
+        <td align="center">No</td>
+      </tr>
+      <tr>
+        <td valign="top">excludesfile</td>
+        <td valign="top">file containing line-delimited exclude patterns</td>
+        <td align="center">No</td>
+      </tr>
+    </table>
+
+    <h3>Parameters specified as nested elements</h3>
+
+    <h4>client</h4>
+
+    <p><a href="s3client.html">s3:client</p>
+
+    <h4>patternset</h4>
+
+    <p>Any number of nested <code>patternset</code>s are permitted.</p>
+
+    <h4>include</h4>
+
+    <p>Any number of nested <code>include</code> elements are permitted.</p>
+
+    <h4>exclude</h4>
+
+    <p>Any number of nested <code>exclude</code> elements are permitted.</p>
+
+    <h4>selector</h4>
+
+    <p>Any number of nested resource selectors are permitted and applied in <code>OR</code> fashion.</p>
+
+  </body>
+</html>
