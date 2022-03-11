@@ -27,7 +27,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -118,68 +120,88 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
         final S3Finder finder;
         final RESPONSE listing;
         final String prefix;
+        final TokenizedPath path;
+        final Set<TokenizedPattern> includes;
+        final int maxDepth;
         final Iterator<CommonPrefix> prefixes;
         final Iterator<Atom<?>> contents;
-        final Function<RESPONSE, SELF> factory;
+        final BiFunction<S3Finder, RESPONSE, SELF> factory;
 
         protected BaseFrame(S3Finder finder, RESPONSE listing, Supplier<String> prefix, List<CommonPrefix> prefixes,
-            Stream<Atom<?>> contents, Function<RESPONSE, SELF> factory) {
+            Stream<Atom<?>> contents, BiFunction<S3Finder, RESPONSE, SELF> factory) {
             this.listing = listing;
             this.prefix = prefix.get();
             this.finder = finder;
 
-            final TokenizedPath path = finder.path(prefix.get());
-            final Set<TokenizedPattern> includes = finder.patterns.getLeft();
+            path = finder.path(prefix.get());
+            includes = finder.patterns.getLeft();
+            maxDepth = includes.stream().mapToInt(
+                include -> include.containsPattern(SelectorUtils.DEEP_TREE_MATCH) ? Integer.MAX_VALUE : include.depth())
+                .max().orElse(Integer.MAX_VALUE);
 
             if (includes.isEmpty()) {
                 this.prefixes = prefixes.iterator();
             } else {
-                final boolean canRecurse = includes.stream().anyMatch(include -> {
-                    if (!include.matchStartOf(path, finder.caseSensitive)) {
-                        return false;
-                    }
-                    final int remainingDepth = include.containsPattern(SelectorUtils.DEEP_TREE_MATCH)
-                        ? Integer.MAX_VALUE : include.depth() - path.depth();
-
-                    return remainingDepth > 1;
-                });
-                if (canRecurse || finder.includePrefixes) {
-                    this.prefixes = prefixes.stream().filter(this::allowPrefix).iterator();
-                } else {
-                    this.prefixes = Collections.emptyIterator();
-                }
+                final int recurseDepth = path.depth() + (finder.includePrefixes ? 0 : 1);
+                this.prefixes = maxDepth > recurseDepth ? prefixes.stream().filter(this::allowPrefix).iterator()
+                    : Collections.emptyIterator();
             }
-            this.contents = contents.filter(this::allow).iterator();
+            final boolean canMatch = includes.isEmpty() || includes.stream().anyMatch(include -> {
+                if (include.containsPattern(SelectorUtils.DEEP_TREE_MATCH)) {
+                    return path.depth() > include.rtrimWildcardTokens().depth();
+                }
+                if (path.depth() == include.depth() && finder.includePrefixes) {
+                    return true;
+                }
+                return include.depth() - path.depth() == 1;
+            });
+
+            this.contents = canMatch ? contents.filter(this::allow).iterator() : Collections.emptyIterator();
             this.factory = factory;
         }
 
-        boolean allowPrefix(CommonPrefix prefix) {
-            return finder.patterns.getLeft().stream()
-                .anyMatch(p -> p.matchStartOf(finder.path(prefix.prefix()), finder.caseSensitive));
+        final boolean allowPrefix(CommonPrefix prefix) {
+            return includes.stream().anyMatch(p -> p.matchStartOf(finder.path(prefix.prefix()), finder.caseSensitive));
         }
 
-        boolean allow(Atom<?> atom) {
+        final boolean allow(Atom<?> atom) {
             final TokenizedPath path = finder.path(atom.key());
-
-            final Set<TokenizedPattern> includes = finder.patterns.getLeft();
             final boolean included = includes.isEmpty() || finder.matchesAny(includes, path);
             return included && !finder.matchesAny(finder.patterns.getRight(), path);
         }
 
-        SELF push() {
-            return factory.apply(push(prefixes.next().prefix()));
+        final SELF push() {
+            final String nextPrefix = prefixes.next().prefix();
+
+            OptionalInt maxKeys = OptionalInt.empty();
+
+            if (maxDepth - path.depth() == 1 && finder.includePrefixes) {
+                final TokenizedPath nextPath = finder.path(nextPrefix);
+                if (includes.stream()
+                    .allMatch(include -> include.depth() > 0
+                        && !SelectorUtils.hasWildcards(SelectorUtils.tokenizePath(include.getPattern()).lastElement())
+                        && include.matchPath(nextPath, finder.caseSensitive))) {
+                    // looks like we're targeting the prefix; limit search appropriately:
+                    maxKeys = OptionalInt.of(1);
+                }
+            }
+            return factory.apply(finder, push(nextPrefix, maxKeys));
         }
 
-        Optional<SELF> next() {
-            return nextResponse().map(factory);
+        final Optional<SELF> next() {
+            if (maxDepth == path.depth()) {
+                // only possible match was prefix, which we should have found in the first listing
+                return Optional.empty();
+            }
+            return nextResponse().map(r -> factory.apply(finder, r));
         }
 
         abstract Optional<RESPONSE> nextResponse();
 
-        abstract RESPONSE push(String prefix);
+        abstract RESPONSE push(String prefix, OptionalInt maxKeys);
 
         @Override
-        public String toString() {
+        public final String toString() {
             return String.format("%s[%s]", getClass().getSimpleName(), prefix);
         }
     }
@@ -197,20 +219,20 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
 
         ObjectsFrame(S3Finder finder, ListObjectsV2Response objects) {
             super(finder, objects, objects::prefix, objects.commonPrefixes(), atoms(objects, finder.includePrefixes),
-                r -> new ObjectsFrame(finder, r));
+                ObjectsFrame::new);
         }
 
         @Override
         Optional<ListObjectsV2Response> nextResponse() {
             if (listing.isTruncated()) {
-                return Optional.of(finder.listObjects(prefix, listing.nextContinuationToken()));
+                return Optional.of(finder.listObjects(prefix, listing.nextContinuationToken(), OptionalInt.empty()));
             }
             return Optional.empty();
         }
 
         @Override
-        ListObjectsV2Response push(String prefix) {
-            return finder.listObjects(prefix, listing.nextContinuationToken());
+        ListObjectsV2Response push(String prefix, OptionalInt maxKeys) {
+            return finder.listObjects(prefix, listing.nextContinuationToken(), maxKeys);
         }
     }
 
@@ -242,7 +264,7 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
 
         VersionsFrame(S3Finder finder, ListObjectVersionsResponse versions) {
             super(finder, versions, versions::prefix, versions.commonPrefixes(),
-                atoms(versions, finder.includePrefixes), r -> new VersionsFrame(finder, r));
+                atoms(versions, finder.includePrefixes), VersionsFrame::new);
         }
 
         @Override
@@ -255,14 +277,14 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
                 } else {
                     vMarker = null;
                 }
-                return Optional.of(finder.listVersions(prefix, listing.nextKeyMarker(), vMarker));
+                return Optional.of(finder.listVersions(prefix, listing.nextKeyMarker(), vMarker, OptionalInt.empty()));
             }
             return Optional.empty();
         }
 
         @Override
-        ListObjectVersionsResponse push(String prefix) {
-            return finder.listVersions(prefix, null, null);
+        ListObjectVersionsResponse push(String prefix, OptionalInt maxKeys) {
+            return finder.listVersions(prefix, null, null, maxKeys);
         }
     }
 
@@ -362,29 +384,34 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
     private BaseFrame<?, ?> root(Precision precision, String prefix) {
         switch (precision) {
         case object:
-            return new ObjectsFrame(this, listObjects(prefix, null));
+            return new ObjectsFrame(this, listObjects(prefix, null, OptionalInt.empty()));
         case version:
-            return new VersionsFrame(this, listVersions(prefix, null, null));
+            return new VersionsFrame(this, listVersions(prefix, null, null, OptionalInt.empty()));
         default:
             throw Exceptions.create(IllegalStateException::new, "Unknown %s %s", Precision.class.getSimpleName(),
                 precision);
         }
     }
 
-    ListObjectsV2Response listObjects(String prefix, String continuationToken) {
+    ListObjectsV2Response listObjects(String prefix, String continuationToken, OptionalInt maxKeys) {
         project.log(String.format("listing %s objects '%s' '%s'", bucket, prefix, continuationToken),
             Project.MSG_DEBUG);
 
         return s3.listObjectsV2(
-            req -> req.bucket(bucket).delimiter(delimiter).prefix(prefix).continuationToken(continuationToken));
+            req -> {
+                req.bucket(bucket).delimiter(delimiter).prefix(prefix).continuationToken(continuationToken);
+                maxKeys.ifPresent(req::maxKeys);
+            });
     }
 
-    ListObjectVersionsResponse listVersions(String prefix, String keyMarker, String versionMarker) {
+    ListObjectVersionsResponse listVersions(String prefix, String keyMarker, String versionMarker, OptionalInt maxKeys) {
         project.log(String.format("listing %s versions '%s' '%s' '%s'", bucket, prefix, keyMarker, versionMarker),
             Project.MSG_DEBUG);
 
-        return s3.listObjectVersions(b -> b.bucket(bucket).delimiter(delimiter).prefix(prefix).keyMarker(keyMarker)
-            .versionIdMarker(versionMarker));
+        return s3.listObjectVersions(b -> {
+            b.bucket(bucket).delimiter(delimiter).prefix(prefix).keyMarker(keyMarker).versionIdMarker(versionMarker);
+            maxKeys.ifPresent(b::maxKeys);
+        });
     }
 
     TokenizedPath path(String s) {
