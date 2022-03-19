@@ -28,9 +28,20 @@ import org.apache.tools.ant.Location;
 import org.apache.tools.ant.Project;
 
 /**
- * Project utils.
+ * Interface providing behavior for Ant {@link Project} components.
  */
-class ProjectUtils {
+interface ProjectUtils {
+
+    /**
+     * Attempt to determine a component name for the specified type.
+     * 
+     * @param type
+     *
+     * @return {@link String}
+     */
+    default String componentName(final Class<?> type) {
+        return componentName(getProject(), type);
+    }
 
     /**
      * Attempt to determine a component name for the specified type relative to
@@ -40,7 +51,7 @@ class ProjectUtils {
      * @param type
      * @return {@link String}
      */
-    static String componentName(final Project project, final Class<?> type) {
+    default String componentName(final Project project, final Class<?> type) {
         Objects.requireNonNull(type, "type");
 
         if (project != null) {
@@ -64,22 +75,22 @@ class ProjectUtils {
      * @throws IllegalStateException
      *             if {@code t == null}
      */
-    static <T> T require(final T item, final String description) {
-        Exceptions.raiseIf(item == null, BuildException::new, "%s is required", description);
+    default <T> T require(final T item, final String description) {
+        Exceptions.raiseIf(item == null, buildException(), "%s is required", description);
         return item;
     }
 
     /**
      * Require the specified component.
-     *
-     * @param <T>
-     * @param project
+     * 
      * @param component
      * @param type
+     *
+     * @param <T>
      * @return {@code component}
      */
-    static <T> T requireComponent(final Project project, final T component, final Class<?> type) {
-        return require(component, componentName(project, type));
+    default <T> T requireComponent(final T component, final Class<?> type) {
+        return require(component, componentName(type));
     }
 
     /**
@@ -89,8 +100,8 @@ class ProjectUtils {
      * @param location
      * @return {@link Function}
      */
-    static Function<String, BuildException> buildExceptionAt(final Location location) {
-        return msg -> new BuildException(msg, location);
+    default Function<String, BuildException> buildException() {
+        return msg -> new BuildException(msg, getLocation());
     }
 
     /**
@@ -101,10 +112,21 @@ class ProjectUtils {
      * @param location
      * @return {@link BiFunction}
      */
-    static BiFunction<String, Throwable, BuildException> buildExceptionTriggeredAt(final Location location) {
-        return (msg, cause) -> new BuildException(msg, cause, location);
+    default BiFunction<String, Throwable, BuildException> buildExceptionTriggered() {
+        return (msg, cause) -> new BuildException(msg, cause, getLocation());
     }
 
-    private ProjectUtils() {
-    }
+    /**
+     * Get the {@link Project} of this item.
+     * 
+     * @return {@link Project}
+     */
+    Project getProject();
+
+    /**
+     * Get the {@link Location} of this item.
+     * 
+     * @return {@link Location}
+     */
+    Location getLocation();
 }

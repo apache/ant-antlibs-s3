@@ -24,7 +24,7 @@ import org.apache.tools.ant.Task;
 /**
  * Define task logging convenience configuration.
  */
-abstract class LoggingTask extends Task {
+abstract class LoggingTask extends Task implements ProjectUtils {
 
     private int verbosity = Project.MSG_VERBOSE;
 

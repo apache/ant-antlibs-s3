@@ -36,7 +36,7 @@ import org.apache.tools.ant.util.StringUtils;
  * S3 {@link ResourceComparator}/{@link ResourceSelector} base/class
  * organization.
  */
-public abstract class CompareSelect extends ResourceComparator implements ResourceSelector {
+public abstract class CompareSelect extends ResourceComparator implements ResourceSelector, ProjectUtils {
 
     /**
      * {@link CompareSelect} {@link ForStringAttribute}.
@@ -136,8 +136,8 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * @param matchAs
          */
         public void setMatchAs(final MatchAs matchAs) {
-            Exceptions.raiseIf(matchAs == null, ProjectUtils.buildExceptionAt(getLocation()),
-                "@matchas may not be null");
+            Exceptions.raiseIf(matchAs == null, buildException(), "@matchas may not be null");
+
             if (this.matchAs != matchAs) {
                 this.matchAs = matchAs;
                 predicate = null;

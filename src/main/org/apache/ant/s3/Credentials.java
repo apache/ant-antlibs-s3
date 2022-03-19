@@ -16,8 +16,6 @@
  */
 package org.apache.ant.s3;
 
-import static org.apache.ant.s3.ProjectUtils.buildExceptionAt;
-
 import java.util.function.Consumer;
 
 import org.apache.tools.ant.Project;
@@ -111,7 +109,7 @@ public class Credentials extends S3DataType implements Consumer<S3ClientBuilder>
         final AwsCredentialsProvider credentialsProvider;
 
         if (getProfile() == null) {
-            Exceptions.raiseIf(getAccessKey() == null || getSecretKey() == null, buildExceptionAt(getLocation()),
+            Exceptions.raiseIf(getAccessKey() == null || getSecretKey() == null, buildException(),
                 "%s requires both @accessKey and @secretKey in the absence of @profile", getDataTypeName());
 
             credentialsProvider =

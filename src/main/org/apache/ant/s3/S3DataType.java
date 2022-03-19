@@ -16,19 +16,15 @@
  */
 package org.apache.ant.s3;
 
-import static org.apache.ant.s3.ProjectUtils.buildExceptionAt;
-
 import java.util.Formatter;
-import java.util.function.Function;
 
-import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.types.DataType;
 
 /**
  * S3 {@link DataType}.
  */
-public abstract class S3DataType extends DataType {
+public abstract class S3DataType extends DataType implements ProjectUtils {
     /**
      * Create a new {@link S3DataType} instance.
      *
@@ -60,15 +56,5 @@ public abstract class S3DataType extends DataType {
      */
     protected void log(final int level, final String format, final Object... args) {
         log(String.format(format, args), level);
-    }
-
-    /**
-     * Get a {@link Function} capable of creating a {@link BuildException} from
-     * its message on behalf of this {@link S3DataType}.
-     *
-     * @return {@link Function}
-     */
-    protected Function<String, BuildException> buildException() {
-        return buildExceptionAt(getLocation());
     }
 }

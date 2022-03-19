@@ -16,9 +16,6 @@
  */
 package org.apache.ant.s3;
 
-import static org.apache.ant.s3.ProjectUtils.buildExceptionAt;
-import static org.apache.ant.s3.ProjectUtils.componentName;
-
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
@@ -64,7 +61,7 @@ import software.amazon.awssdk.services.s3.model.Tagging;
 /**
  * Amazon S3 object {@link Resource} implementation.
  */
-public class ObjectResource extends Resource {
+public class ObjectResource extends Resource implements ProjectUtils {
     private static class VersionInfo {
         final boolean deleteMarker;
         final boolean latest;
@@ -311,7 +308,7 @@ public class ObjectResource extends Resource {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public InlineProperties createMetadata() {
         checkChildrenAllowed();
-        Exceptions.raiseUnless(metadata == null, buildExceptionAt(getLocation()), "metadata already specified");
+        Exceptions.raiseUnless(metadata == null, buildException(), "metadata already specified");
 
         final InlineProperties result = new InlineProperties(getProject());
         metadata = (Map) result.properties;
@@ -356,7 +353,7 @@ public class ObjectResource extends Resource {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public InlineProperties createTagging() {
         checkChildrenAllowed();
-        Exceptions.raiseUnless(tagging == null, buildExceptionAt(getLocation()), "tagging already specified");
+        Exceptions.raiseUnless(tagging == null, buildException(), "tagging already specified");
 
         final InlineProperties result = new InlineProperties(getProject());
         tagging = (Map) result.properties;
@@ -405,8 +402,8 @@ public class ObjectResource extends Resource {
     public void addConfigured(Client s3) {
         checkChildrenAllowed();
 
-        Exceptions.raiseUnless(this.s3 == null, buildExceptionAt(getLocation()),
-            () -> String.format("%s already specified", componentName(getProject(), Client.class)));
+        Exceptions.raiseUnless(this.s3 == null, buildException(),
+            () -> String.format("%s already specified", componentName(Client.class)));
 
         this.s3 = Objects.requireNonNull(s3).get();
     }
@@ -418,7 +415,7 @@ public class ObjectResource extends Resource {
      */
     public void setClientRefid(String refid) {
         checkAttributesAllowed();
-        Exceptions.raiseIf(StringUtils.isBlank(refid), buildExceptionAt(getLocation()),
+        Exceptions.raiseIf(StringUtils.isBlank(refid), buildException(),
             "@clientrefid must not be null/empty/blank");
 
         addConfigured(getProject().<Client> getReference(refid));
@@ -654,8 +651,8 @@ public class ObjectResource extends Resource {
     private <B extends S3Request.Builder> Consumer<B> request(BiConsumer<B, String> setBucket,
         BiConsumer<B, String> setKey) {
         return b -> {
-            setBucket.accept(b, ProjectUtils.require(getBucket(), "@bucket"));
-            setKey.accept(b, ProjectUtils.require(getKey(), "@key"));
+            setBucket.accept(b, require(getBucket(), "@bucket"));
+            setKey.accept(b, require(getKey(), "@key"));
         };
     }
 
@@ -705,7 +702,7 @@ public class ObjectResource extends Resource {
     }
 
     private S3Client s3() {
-        return ProjectUtils.requireComponent(getProject(), s3, Client.class);
+        return requireComponent(s3, Client.class);
     }
 
     private void _setDirectory(boolean directory) {

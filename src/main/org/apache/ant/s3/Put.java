@@ -16,10 +16,6 @@
  */
 package org.apache.ant.s3;
 
-import static org.apache.ant.s3.ProjectUtils.buildExceptionAt;
-import static org.apache.ant.s3.ProjectUtils.require;
-import static org.apache.ant.s3.ProjectUtils.requireComponent;
-
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
@@ -94,7 +90,7 @@ public class Put extends CopyResources {
      */
     @Override
     public void setAppend(boolean append) {
-        Exceptions.raiseIf(append, buildExceptionAt(getLocation()), "@append not supported by %s", getTaskName());
+        Exceptions.raiseIf(append, buildException(), "@append not supported by %s", getTaskName());
     }
 
     /**
@@ -106,12 +102,13 @@ public class Put extends CopyResources {
      */
     @Override
     public void setPreserveLastModified(boolean preserveLastModified) {
-        Exceptions.raiseIf(preserveLastModified, buildExceptionAt(getLocation()),
-            "@preserveLastModified not supported by %s", getTaskName());
+        Exceptions.raiseIf(preserveLastModified, buildException(), "@preserveLastModified not supported by %s",
+            getTaskName());
     }
 
     /**
      * Enforce "always overwrite."
+     * 
      * @return {@code true}
      */
     @Override
@@ -128,8 +125,7 @@ public class Put extends CopyResources {
      */
     @Override
     public void setOverwrite(boolean overwrite) {
-        Exceptions.raiseUnless(overwrite, buildExceptionAt(getLocation()), "%s only operates in overwrite mode",
-            getTaskName());
+        Exceptions.raiseUnless(overwrite, buildException(), "%s only operates in overwrite mode", getTaskName());
     }
 
     /**
@@ -185,6 +181,6 @@ public class Put extends CopyResources {
     }
 
     private S3Client s3() {
-        return requireComponent(getProject(), s3, Client.class).get();
+        return requireComponent(s3, Client.class).get();
     }
 }

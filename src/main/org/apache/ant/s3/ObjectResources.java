@@ -16,10 +16,6 @@
  */
 package org.apache.ant.s3;
 
-import static org.apache.ant.s3.ProjectUtils.componentName;
-import static org.apache.ant.s3.ProjectUtils.require;
-import static org.apache.ant.s3.ProjectUtils.requireComponent;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -93,7 +89,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
         checkChildrenAllowed();
 
         Exceptions.raiseUnless(this.s3 == null, buildException(),
-            () -> String.format("%s already specified", componentName(getProject(), Client.class)));
+            () -> String.format("%s already specified", componentName(Client.class)));
 
         this.s3 = Objects.requireNonNull(s3);
         resetResourceCache();
@@ -449,7 +445,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
     }
 
     private S3Client s3() {
-        return requireComponent(getProject(), s3, Client.class).get();
+        return requireComponent(s3, Client.class).get();
     }
 
     private boolean isSelected(Resource resource) {
