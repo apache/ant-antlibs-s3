@@ -32,6 +32,8 @@ under the License.
 
   <import file="common/build.xml"/>
 
+  <property name="ivy.report.todir" location="${build}/ivyreports" />
+
   <target name="install-all" depends="install">
     <ivy:retrieve pattern="${ant.home}/lib/[artifact]-[revision].[ext]" conf="default" />
   </target>
@@ -178,4 +180,19 @@ under the License.
       println com.adobe.testing.s3mock.S3MockApplication.DEFAULT_HTTPS_PORT
     </groovy>
   </target>
+
+  <target name="clean-all" depends="clean">
+    <delete dir="${lib.dir}" />
+  </target>
+
+  <target name="resolve-all" depends="install-ivy,-no-resolve" if="with.ivy" unless="no.resolve">
+    <ivy:resolve file="ivy.xml" conf="*(public),test" />
+    <ivy:retrieve pattern="${lib.dir}/[conf]/[artifact].[ext]" sync="yes" />
+  </target>
+
+  <target name="ivy-report" depends="install-ivy,-no-resolve" if="with.ivy" unless="no.resolve">
+    <ivy:resolve file="ivy.xml" />
+    <ivy:report />
+  </target>
+
 </project>
