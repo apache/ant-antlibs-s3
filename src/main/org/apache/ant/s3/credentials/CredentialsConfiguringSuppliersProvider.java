@@ -30,7 +30,6 @@ import org.apache.ant.s3.build.spi.ConfiguringSuppliersProvider;
 import org.apache.ant.s3.strings.ClassNames;
 import org.apache.ant.s3.strings.ClassNames.Direction;
 import org.apache.ant.s3.strings.PackageNames;
-import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -44,7 +43,6 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProcessCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProviderFactory;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.internal.LazyAwsCredentialsProvider;
@@ -257,18 +255,6 @@ public class CredentialsConfiguringSuppliersProvider extends ConfiguringSupplier
     }
 
     /**
-     * Classname of only known implementation of
-     * {@link ProfileCredentialsProviderFactory}.
-     */
-    public static final String SSO_CPF_CLASSNAME =
-        "software.amazon.awssdk.services.sso.auth.SsoProfileCredentialsProviderFactory";
-
-    /**
-     * Package name of AWS services package.
-     */
-    public static final String SERVICES_PACKAGE = "software.amazon.awssdk.services";
-
-    /**
      * Produce a {@link ConfiguringSupplier} of {@link AwsCredentialsProvider}.
      * This is a {@link MetaBuilderByType} configured to search for
      * {@link AwsCredentialsProvider} types given an {@code @impl} "fragment"
@@ -295,52 +281,6 @@ public class CredentialsConfiguringSuppliersProvider extends ConfiguringSupplier
                 PackageNames.of(AwsCredentialsProvider.class).ancestors(0, 2).andThen(PackageNames.of(getClass())),
                 ClassNames.of(AwsCredentialsProvider.class).segments(Direction.FROM_LEFT)),
             StaticCredentialsProvider.class);
-    }
-
-    /**
-     * Produce a {@link ConfiguringSupplier} of
-     * {@link ProfileCredentialsProviderFactory}. This is a
-     * {@link MetaBuilderByType} configured to search for
-     * {@link ProfileCredentialsProviderFactory} types given an {@code @impl}
-     * "fragment" that is:
-     * <ul>
-     * <li>Tested as a FQ classname</li>
-     * <li>Plugged into a matrix of: packages
-     * <ul>
-     * <li>Package of {@link ProfileCredentialsProviderFactory}</li>
-     * <li>Package of {@link #SSO_CPF_CLASSNAME} (if class present on classpath;
-     * prioritizes {@code sso} as explicit impl key)</li>
-     * <li>{@link #SERVICES_PACKAGE} ({@value #SERVICES_PACKAGE})</li>
-     * <li>1-2 ancestors of {@link ProfileCredentialsProviderFactory}</li>
-     * </ul>
-     * X classname suffixes as segments of
-     * {@link ProfileCredentialsProviderFactory}, successively trimmed from the
-     * LHS.</li>
-     * <li>If unspecified, defaulted to {@link #SSO_CPF_CLASSNAME} if present on
-     * classpath</li>
-     * </ul>
-     * 
-     * @param project
-     *            Ant {@link Project}
-     * @return {@link MetaBuilderByType} of
-     *         {@link ProfileCredentialsProviderFactory}
-     */
-    public MetaBuilderByType<ProfileCredentialsProviderFactory> profileCredentialsProviderFactoryConfiguringSupplier(
-        Project project) {
-        final PackageNames pcpf = PackageNames.of(ProfileCredentialsProviderFactory.class);
-        PackageNames packageNames = pcpf;
-
-        Class<? extends ProfileCredentialsProviderFactory> defaultImpl;
-        try {
-            defaultImpl = ClassUtils.getClass(SSO_CPF_CLASSNAME).asSubclass(ProfileCredentialsProviderFactory.class);
-            packageNames = PackageNames.of(defaultImpl).andThen(packageNames);
-        } catch (ClassNotFoundException e) {
-            defaultImpl = null;
-        }
-        packageNames = packageNames.andThen(PackageNames.of(SERVICES_PACKAGE)).andThen(pcpf.ancestors(1, 2));
-
-        return new MetaBuilderByType<>(project, ProfileCredentialsProviderFactory.class, new ClassFinder(packageNames,
-            ClassNames.of(ProfileCredentialsProviderFactory.class).segments(Direction.FROM_LEFT)), defaultImpl);
     }
 
     /**
