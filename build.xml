@@ -190,6 +190,13 @@ under the License.
     <ivy:retrieve pattern="${lib.dir}/[conf]/[artifact].[ext]" sync="yes" />
   </target>
 
+  <target name="publish-local" depends="prepare-upload">
+    <ivy:publish resolver="local"
+                 haltonmissing="false"
+                 overwrite="true"
+                 artifactspattern="${build.javarepository}/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]" />
+  </target>
+
   <target name="ivy-report" depends="install-ivy,-no-resolve" if="with.ivy" unless="no.resolve">
     <ivy:resolve file="ivy.xml" />
     <ivy:report />
