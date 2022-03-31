@@ -53,17 +53,11 @@ public class Delete extends LoggingTask {
     private int blockSize = DEFAULT_BLOCK_SIZE;
 
     /**
-     * Create a new {@link Delete} task instance.
-     */
-    public Delete() {
-        super();
-    }
-
-    /**
      * Create a new {@link Delete} task instance bound to the specified
      * {@link Project}.
      * 
      * @param project
+     *            Ant {@link Project}
      */
     public Delete(Project project) {
         super(project);
@@ -98,6 +92,7 @@ public class Delete extends LoggingTask {
      * Add a configured {@link Client}.
      *
      * @param s3
+     *            {@link Client}
      */
     public void addConfigured(final Client s3) {
         if (this.s3 != null) {
@@ -110,6 +105,7 @@ public class Delete extends LoggingTask {
      * Set the {@link Client} by reference.
      *
      * @param refid
+     *            of {@link Client}
      */
     public void setClientRefid(final String refid) {
         Objects.requireNonNull(StringUtils.trimToNull(refid), "@clientrefid must not be null/empty/blank");
@@ -121,6 +117,7 @@ public class Delete extends LoggingTask {
      * Add a nested {@link ResourceCollection}.
      * 
      * @param coll
+     *            {@link ResourceCollection}
      */
     public synchronized void addConfigured(ResourceCollection coll) {
         Exceptions.raiseIf(coll == null, IllegalArgumentException::new, "null %s",
@@ -140,6 +137,7 @@ public class Delete extends LoggingTask {
      * Add by reference a {@link ResourceCollection} to delete.
      * 
      * @param refid
+     *            of {@link ResourceCollection}
      */
     public void setRefid(Reference refid) {
         addConfigured(refid.<ResourceCollection> getReferencedObject(getProject()));

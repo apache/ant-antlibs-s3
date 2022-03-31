@@ -35,7 +35,7 @@ interface ProjectUtils {
     /**
      * Attempt to determine a component name for the specified type.
      * 
-     * @param type
+     * @param type for which component name is desired
      *
      * @return {@link String}
      */
@@ -47,8 +47,8 @@ interface ProjectUtils {
      * Attempt to determine a component name for the specified type relative to
      * the specified {@link Project}.
      *
-     * @param project
-     * @param type
+     * @param project Ant project
+     * @param type for which component name is desired
      * @return {@link String}
      */
     default String componentName(final Project project, final Class<?> type) {
@@ -68,9 +68,9 @@ interface ProjectUtils {
     /**
      * Require the specified item.
      *
-     * @param <T>
-     * @param item
-     * @param description
+     * @param <T> type
+     * @param item required object
+     * @param description description in thrown {@link Exception} if absent
      * @return {@code item}
      * @throws IllegalStateException
      *             if {@code t == null}
@@ -83,10 +83,10 @@ interface ProjectUtils {
     /**
      * Require the specified component.
      * 
-     * @param component
-     * @param type
+     * @param component required component
+     * @param type of component
      *
-     * @param <T>
+     * @param <T> type
      * @return {@code component}
      */
     default <T> T requireComponent(final T component, final Class<?> type) {
@@ -97,7 +97,6 @@ interface ProjectUtils {
      * Create a {@link Function} that will create a {@link BuildException} at
      * the specified {@link Location}, given the {@link String} message.
      *
-     * @param location
      * @return {@link Function}
      */
     default Function<String, BuildException> buildException() {
@@ -109,7 +108,6 @@ interface ProjectUtils {
      * the specified {@link Location}, given the {@link String} message and
      * {@link Throwable} cause.
      *
-     * @param location
      * @return {@link BiFunction}
      */
     default BiFunction<String, Throwable, BuildException> buildExceptionTriggered() {

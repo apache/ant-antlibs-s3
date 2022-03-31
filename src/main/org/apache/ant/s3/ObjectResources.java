@@ -73,6 +73,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
      * Create a new {@link ObjectResources} instance.
      *
      * @param project
+     *            Ant {@link Project}
      */
     public ObjectResources(final Project project) {
         super(project);
@@ -84,6 +85,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
      * Add the nested {@link Client}.
      *
      * @param s3
+     *            {@link Client}
      */
     public void addConfigured(final Client s3) {
         checkChildrenAllowed();
@@ -99,6 +101,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
      * Set {@link Client} by reference.
      *
      * @param refid
+     *            of {@link Client}
      */
     public void setClientRefid(final String refid) {
         checkAttributesAllowed();
@@ -113,6 +116,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
      * Add a configured {@link ResourceSelector}.
      *
      * @param selector
+     *            to add
      */
     public void addConfigured(ResourceSelector selector) {
         checkChildrenAllowed();
@@ -215,6 +219,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
      * Set the bucket of this {@link ObjectResources}.
      *
      * @param bucket
+     *            where resources exist
      */
     public void setBucket(String bucket) {
         checkAttributesAllowed();
@@ -240,13 +245,13 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
      * name property and {@link Object#toString()} value of generated
      * {@link ObjectResource}s.
      * 
-     * @param precision
+     * @param as
      *            {@link Precision}
      */
-    public void setAs(Precision precision) {
+    public void setAs(Precision as) {
         checkAttributesAllowed();
-        if (precision != this.as) {
-            this.as = Objects.requireNonNull(precision);
+        if (as != this.as) {
+            this.as = Objects.requireNonNull(as);
             resetResourceCache();
         }
     }
@@ -314,6 +319,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
      * default {@code true}.
      *
      * @param cache
+     *            flag
      */
     public void setCache(boolean cache) {
         this.cache = cache;
@@ -335,7 +341,9 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
     /**
      * Set whether to include S3 object prefixes as "directory" type
      * {@link Resource}s, default {@code false}.
-     * @param includePrefixes {@code boolean}
+     * 
+     * @param includePrefixes
+     *            {@code boolean}
      */
     public void setIncludePrefixes(boolean includePrefixes) {
         checkAttributesAllowed();
@@ -349,6 +357,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
      * Add a nested {@link PatternSet}.
      *
      * @param patternSet
+     *            to add
      */
     public void addConfigured(PatternSet patternSet) {
         checkChildrenAllowed();
@@ -404,6 +413,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
      * Set includes patterns via attribute.
      *
      * @param includes
+     *            patterns
      */
     public void setIncludes(String includes) {
         checkAttributesAllowed();
@@ -415,6 +425,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
      * Set includes file via attribute.
      *
      * @param includesFile
+     *            {@link File}
      */
     public void setIncludesFile(File includesFile) {
         checkAttributesAllowed();
@@ -423,9 +434,10 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
     }
 
     /**
-     * Set excludes pattersn via attribute.
+     * Set excludes patterns via attribute.
      *
      * @param excludes
+     *            patterns
      */
     public void setExcludes(String excludes) {
         checkAttributesAllowed();
@@ -437,6 +449,7 @@ public class ObjectResources extends S3DataType implements ResourceCollection {
      * Set excludes file via attribute.
      *
      * @param excludesFile
+     *            {@link File}
      */
     public void setExcludesFile(File excludesFile) {
         checkAttributesAllowed();

@@ -28,18 +28,17 @@ public abstract class S3DataType extends DataType implements ProjectUtils {
     /**
      * Create a new {@link S3DataType} instance.
      *
-     * @param project
+     * @param project Ant {@link Project}
      */
     protected S3DataType(final Project project) {
         setProject(project);
     }
 
     /**
-     * Log a formatted message at the default level dictated by
-     * {@link #isVerbose()}.
+     * Log a formatted message at {@link Project#MSG_INFO} level.
      *
-     * @param format
-     * @param args
+     * @param format {@link String}
+     * @param args to format
      * @see Formatter
      */
     protected void log(final String format, final Object... args) {
@@ -49,9 +48,9 @@ public abstract class S3DataType extends DataType implements ProjectUtils {
     /**
      * Log a formatted message at the specified level.
      *
-     * @param level
-     * @param format
-     * @param args
+     * @param level log level
+     * @param format {@link String}
+     * @param args to format
      * @see Formatter
      */
     protected void log(final int level, final String format, final Object... args) {

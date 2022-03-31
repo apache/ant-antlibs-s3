@@ -102,6 +102,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Create a new {@link CompareSelect.ForStringAttribute}.
          *
          * @param project
+         *            Ant {@link Project}
          */
         protected ForStringAttribute(final Project project) {
             super(project);
@@ -112,6 +113,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Add nested text by which the value to compare is set.
          *
          * @param text
+         *            to add
          */
         public void addText(final String text) {
             Optional.ofNullable(StringUtils.trimToNull(text)).map(getProject()::replaceProperties).map(String::trim)
@@ -122,7 +124,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
         }
 
         /**
-         * Get "match as" strategy (default {@link MatchAs#LITERAL}.
+         * Get "match as" strategy (default {@link MatchAs#literal}.
          *
          * @return {@link MatchAs}
          */
@@ -134,6 +136,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Set "match as" strategy.
          *
          * @param matchAs
+         *            strategy
          */
         public void setMatchAs(final MatchAs matchAs) {
             Exceptions.raiseIf(matchAs == null, buildException(), "@matchas may not be null");
@@ -158,6 +161,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Set whether matching should be performed in a case-sensitive manner.
          *
          * @param caseSensitive
+         *            flag
          */
         public void setCaseSensitive(final boolean caseSensitive) {
             if (caseSensitive != this.caseSensitive) {
@@ -179,6 +183,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * {@link ObjectResource}.
          *
          * @param obj
+         *            owning value
          * @return {@link String}
          */
         protected abstract String extractValueFrom(ObjectResource obj);
@@ -217,6 +222,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Create a new {@link Bucket} selector.
          *
          * @param project
+         *            Ant {@link Project}
          */
         public Bucket(final Project project) {
             super(project);
@@ -240,6 +246,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Create a new {@link Key} selector.
          *
          * @param project
+         *            Ant {@link Project}
          */
         public Key(final Project project) {
             super(project);
@@ -263,6 +270,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Create a new {@link ContentType} selector.
          *
          * @param project
+         *            Ant {@link Project}
          */
         public ContentType(final Project project) {
             super(project);
@@ -287,6 +295,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Create a new {@link Meta} selector.
          *
          * @param project
+         *            Ant {@link Project}
          */
         public Meta(final Project project) {
             super(project);
@@ -305,6 +314,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Set the user metadata key to match on.
          *
          * @param key
+         *            to match
          */
         public void setKey(final String key) {
             this.key = key;
@@ -329,6 +339,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Create a new {@link Tag} selector.
          *
          * @param project
+         *            Ant {@link Project}
          */
         public Tag(final Project project) {
             super(project);
@@ -347,6 +358,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Set the tag key to match on.
          *
          * @param key
+         *            to match
          */
         public void setKey(final String key) {
             this.key = key;
@@ -370,11 +382,15 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Create a new {@link VersionId} selector.
          * 
          * @param project
+         *            Ant {@link Project}
          */
         public VersionId(Project project) {
             super(project);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         protected String extractValueFrom(ObjectResource obj) {
             return obj.getVersionId();
@@ -392,6 +408,9 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Create a new {@link CompareSelect.ForBooleanAttribute}.
          * 
          * @param project
+         *            Ant {@link Project}
+         * @param test
+         *            to determine truth
          */
         protected ForBooleanAttribute(Project project, Predicate<ObjectResource> test) {
             super(project);
@@ -425,6 +444,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Create a new {@link DeleteMarker}.
          * 
          * @param project
+         *            Ant {@link Project}
          */
         public DeleteMarker(Project project) {
             super(project, ObjectResource::isDeleteMarker);
@@ -440,6 +460,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Create a new {@link Latest}.
          * 
          * @param project
+         *            Ant {@link Project}
          */
         public Latest(Project project) {
             super(project, ObjectResource::isLatest);
@@ -458,6 +479,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Create a new {@link ByPrecision}.
          * 
          * @param project
+         *            Ant {@link Project}
          */
         public ByPrecision(Project project) {
             super(project);
@@ -476,7 +498,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
          * Set the precision.
          * 
          * @param precision
-         *            Precision
+         *            {@link Precision}
          */
         public void setPrecision(Precision precision) {
             this.precision = precision;
@@ -512,6 +534,7 @@ public abstract class CompareSelect extends ResourceComparator implements Resour
      * Create a {@link CompareSelect} instance.
      * 
      * @param project
+     *            Ant {@link Project}
      */
     protected CompareSelect(Project project) {
         setProject(project);

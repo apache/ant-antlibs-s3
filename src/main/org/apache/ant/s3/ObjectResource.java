@@ -74,8 +74,7 @@ public class ObjectResource extends Resource implements ProjectUtils {
 
     @FunctionalInterface
     private interface Finalizer {
-        static final Finalizer NOP = () -> {
-        };
+        static final Finalizer NOP = () -> {};
 
         void run() throws Exception;
 
@@ -115,58 +114,122 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * Create a new {@link ObjectResource}.
      *
      * @param project
+     *            Ant {@link Project}
      */
     public ObjectResource(Project project) {
         setProject(project);
     }
 
     /**
-     * Create a new {@link ObjectResource} from a listing.
+     * Create an {@link ObjectResource} from a listing.
      *
      * @param project
+     *            Ant {@link Project}
      * @param s3
+     *            {@link S3Client}
      * @param bucket
+     *            of object
      * @param summary
-     * @param precision
+     *            object info
      */
     ObjectResource(Project project, S3Client s3, String bucket, S3Object summary) {
         this(project, s3, bucket, summary.key(), summary::size, summary::lastModified, null, Precision.object);
     }
 
+    /**
+     * Create an {@link ObjectResource} representing a delete marker.
+     * 
+     * @param project
+     *            Ant {@link Project}
+     * @param s3
+     *            {@link S3Client}
+     * @param bucket
+     *            of object
+     * @param deleteMarker
+     *            info
+     */
     ObjectResource(Project project, S3Client s3, String bucket, DeleteMarkerEntry deleteMarker) {
         this(project, s3, bucket, deleteMarker.key(), () -> UNKNOWN_SIZE, deleteMarker::lastModified,
             deleteMarker::versionId, Precision.version);
         versionInfo = Optional.ofNullable(new VersionInfo(true, deleteMarker.isLatest().booleanValue()));
     }
 
+    /**
+     * Create an {@link ObjectResource} representing an object version.
+     * 
+     * @param project
+     *            Ant {@link Project}
+     * @param s3
+     *            {@link S3Client}
+     * @param bucket
+     *            of object
+     * @param version
+     *            info
+     */
     ObjectResource(Project project, S3Client s3, String bucket, ObjectVersion version) {
         this(project, s3, bucket, version.key(), version::size, version::lastModified, version::versionId,
             Precision.version);
         versionInfo = Optional.of(new VersionInfo(false, version.isLatest().booleanValue()));
     }
 
+    /**
+     * Create an {@link ObjectResource}.
+     * 
+     * @param project
+     *            Ant {@link Project}
+     * @param s3
+     *            {@link S3Client}
+     * @param bucket
+     *            of object
+     * @param key
+     *            of object
+     * @param size
+     *            of object
+     * @param lastModified
+     *            of object
+     * @param versionId
+     *            of object
+     * @param precision
+     *            of object
+     */
     ObjectResource(Project project, S3Client s3, String bucket, String key, LongSupplier size,
         Supplier<Instant> lastModified, Supplier<String> versionId, Precision precision) {
-
         this(project, s3, bucket, key);
         this.size = size;
         this.lastModified = lastModified;
         this.versionId = versionId;
     }
 
+    /**
+     * Create an {@link ObjectResource} representing a prefix.
+     * 
+     * @param project
+     *            Ant {@link Project}
+     * @param s3
+     *            {@link S3Client}
+     * @param bucket
+     *            of prefix
+     * @param prefix
+     *            {@link String}
+     * @return {@link ObjectResource}
+     */
     static ObjectResource ofPrefix(Project project, S3Client s3, String bucket, String prefix) {
-        ObjectResource result = new ObjectResource(project,s3,bucket,prefix);
+        final ObjectResource result = new ObjectResource(project, s3, bucket, prefix);
         result._setDirectory(true);
         return result;
     }
 
     /**
-     * Create a new {@link ObjectResource} fully-formed.
+     * Create a new {@link ObjectResource} with complete identifying info.
      *
      * @param project
+     *            Ant {@link Project}
      * @param s3
+     *            {@link S3Client}
      * @param bucket
+     *            of object
      * @param key
+     *            of object
      */
     ObjectResource(Project project, S3Client s3, String bucket, String key) {
         setProject(project);
@@ -188,6 +251,7 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * Set the bucket of the S3 object.
      *
      * @param bucket
+     *            of object
      */
     public void setBucket(String bucket) {
         checkAttributesAllowed();
@@ -210,6 +274,7 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * Set the key of the S3 object within its bucket.
      *
      * @param key
+     *            of object
      */
     public void setKey(String key) {
         this.key = key;
@@ -218,6 +283,9 @@ public class ObjectResource extends Resource implements ProjectUtils {
     /**
      * Set the name of the S3 object, which for our purposes is equivalent to
      * calling {@link #setKey(String)}.
+     * 
+     * @param name
+     *            {@code key}
      */
     @Override
     public void setName(String name) {
@@ -228,6 +296,8 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * Get the name of the S3 object, which may be suffixed with the object
      * version if {@link #getPrecision()} returns {@link Precision#version} and
      * this object exists.
+     * 
+     * @return {@link String}
      */
     @Override
     public String getName() {
@@ -244,7 +314,9 @@ public class ObjectResource extends Resource implements ProjectUtils {
 
     /**
      * {@inheritDoc}
+     * 
      * @throws UnsupportedOperationException
+     *             always
      */
     @Override
     public void setDirectory(boolean directory) {
@@ -295,6 +367,7 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * Set the content type of the S3 object.
      *
      * @param contentType
+     *            of object
      */
     public void setContentType(String contentType) {
         this.contentType = contentType;
@@ -339,6 +412,7 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * Set the metadata.
      *
      * @param metadata
+     *            of object
      */
     public void setMetadata(Map<String, String> metadata) {
         Exceptions.raiseIf(isReference(), UnsupportedOperationException::new, "setMetadata");
@@ -386,6 +460,7 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * Set the tagging for the S3 object.
      *
      * @param tagging
+     *            of object
      */
     public void setTagging(Map<String, String> tagging) {
         if (isReference()) {
@@ -398,6 +473,7 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * Add the configured {@link Client} element.
      *
      * @param s3
+     *            {@link Client}
      */
     public void addConfigured(Client s3) {
         checkChildrenAllowed();
@@ -412,11 +488,11 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * Set the {@link Client} by reference.
      *
      * @param refid
+     *            of {@link Client}
      */
     public void setClientRefid(String refid) {
         checkAttributesAllowed();
-        Exceptions.raiseIf(StringUtils.isBlank(refid), buildException(),
-            "@clientrefid must not be null/empty/blank");
+        Exceptions.raiseIf(StringUtils.isBlank(refid), buildException(), "@clientrefid must not be null/empty/blank");
 
         addConfigured(getProject().<Client> getReference(refid));
     }
@@ -521,6 +597,7 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * Put a {@link File} as the content of this S3 object.
      *
      * @param file
+     *            source
      */
     public void put(File file) {
         if (isReference()) {
@@ -535,7 +612,9 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * {@link S3Client} client to use.
      *
      * @param s3
+     *            {@link S3Client} to use
      * @param file
+     *            source
      */
     public void put(S3Client s3, File file) {
         if (isReference()) {
@@ -558,6 +637,7 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * Delete this object from its bucket using the specified {@link S3Client}.
      * 
      * @param s3
+     *            {@link S3Client} to use
      */
     public void delete(S3Client s3) {
         if (isReference()) {
@@ -597,6 +677,7 @@ public class ObjectResource extends Resource implements ProjectUtils {
      * data are equal, in addition to {@link Object#equals(Object)} equality.
      *
      * @param other
+     *            object to compare for equality
      * @return {@code boolean}
      */
     public boolean fullyEquals(Object other) {
@@ -709,4 +790,3 @@ public class ObjectResource extends Resource implements ProjectUtils {
         super.setDirectory(directory);
     }
 }
-

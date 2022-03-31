@@ -54,6 +54,16 @@ public abstract class CopyResources extends LoggingTask {
     private boolean preserveLastModified;
 
     /**
+     * Create a new {@link CopyResources} instance.
+     *
+     * @param project
+     *            Ant {@link Project}
+     */
+    protected CopyResources(Project project) {
+        super(project);
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -105,8 +115,9 @@ public abstract class CopyResources extends LoggingTask {
      * Add a nested source {@link ResourceCollection}.
      *
      * @param sources
+     *            to add
      */
-    public void add(final ResourceCollection sources) {
+    public void add(ResourceCollection sources) {
         this.sources.add(sources);
     }
 
@@ -131,7 +142,7 @@ public abstract class CopyResources extends LoggingTask {
      * @param fileNameMapper
      *            the {@link FileNameMapper} to add
      */
-    public void add(final FileNameMapper fileNameMapper) {
+    public void add(FileNameMapper fileNameMapper) {
         createMapper().add(fileNameMapper);
     }
 
@@ -148,8 +159,9 @@ public abstract class CopyResources extends LoggingTask {
      * Set the input encoding.
      *
      * @param inputEncoding
+     *            to set
      */
-    public void setInputEncoding(final String inputEncoding) {
+    public void setInputEncoding(String inputEncoding) {
         this.inputEncoding = inputEncoding;
     }
 
@@ -166,8 +178,9 @@ public abstract class CopyResources extends LoggingTask {
      * Set the output encoding.
      *
      * @param outputEncoding
+     *            to set
      */
-    public void setOutputEncoding(final String outputEncoding) {
+    public void setOutputEncoding(String outputEncoding) {
         this.outputEncoding = outputEncoding;
     }
 
@@ -184,8 +197,9 @@ public abstract class CopyResources extends LoggingTask {
      * Set whether global Ant filters should be applied to copy operations.
      *
      * @param filtering
+     *            flag
      */
-    public void setFiltering(final boolean filtering) {
+    public void setFiltering(boolean filtering) {
         this.filtering = filtering;
     }
 
@@ -224,8 +238,9 @@ public abstract class CopyResources extends LoggingTask {
      * Set whether up-to-date target {@link Resource}s should be overwritten.
      *
      * @param overwrite
+     *            flag
      */
-    public void setOverwrite(final boolean overwrite) {
+    public void setOverwrite(boolean overwrite) {
         this.overwrite = overwrite;
     }
 
@@ -248,15 +263,16 @@ public abstract class CopyResources extends LoggingTask {
      * be copied to.
      *
      * @param enableMultipleMappings
+     *            flag
      */
-    public void setEnableMultipleMappings(final boolean enableMultipleMappings) {
+    public void setEnableMultipleMappings(boolean enableMultipleMappings) {
         this.enableMultipleMappings = enableMultipleMappings;
     }
 
     /**
      * Learn whether target {@link Resource} content should be appended.
      *
-     * @return
+     * @return {@code boolean}
      */
     public boolean isAppend() {
         return append;
@@ -266,8 +282,9 @@ public abstract class CopyResources extends LoggingTask {
      * Set whether target {@link Resource} content should be appended.
      *
      * @param append
+     *            flag
      */
-    public void setAppend(final boolean append) {
+    public void setAppend(boolean append) {
         this.append = append;
     }
 
@@ -285,8 +302,9 @@ public abstract class CopyResources extends LoggingTask {
      * Set whether to preserve last modified time on target {@link Resource}s.
      *
      * @param preserveLastModified
+     *            flag
      */
-    public void setPreserveLastModified(final boolean preserveLastModified) {
+    public void setPreserveLastModified(boolean preserveLastModified) {
         this.preserveLastModified = preserveLastModified;
     }
 
@@ -302,13 +320,17 @@ public abstract class CopyResources extends LoggingTask {
      * {@link FilterSetCollection} and {@code filterChains}.
      *
      * @param source
+     *            {@link Resource}
      * @param dest
+     *            {@link Resource}
      * @param filters
+     *            {@link FilterSetCollection}
      * @param filterChains
-     * @throws IOException
+     *            {@link Vector} of {@link FilterChain}
+     * @throws IOException on error
      */
-    protected void copyResource(final Resource source, final Resource dest, final FilterSetCollection filters,
-        final Vector<FilterChain> filterChains) throws IOException {
+    protected void copyResource(Resource source, Resource dest, FilterSetCollection filters,
+        Vector<FilterChain> filterChains) throws IOException {
         ResourceUtils.copyResource(source, dest, filters, filterChains, isOverwrite(), isPreserveLastModified(),
             isAppend(), getInputEncoding(), getOutputEncoding(), getProject());
     }

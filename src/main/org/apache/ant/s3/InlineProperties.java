@@ -40,9 +40,9 @@ public class InlineProperties extends S3DataType implements DynamicElementNS {
     /**
      * Create a new {@link InlineProperties} instance.
      * 
-     * @param project
+     * @param project Ant {@link Project}
      */
-    public InlineProperties(final Project project) {
+    public InlineProperties(Project project) {
         super(project);
     }
 
@@ -52,7 +52,7 @@ public class InlineProperties extends S3DataType implements DynamicElementNS {
     public final class InlineProperty {
         private final String name;
 
-        private InlineProperty(final String name) {
+        private InlineProperty(String name) {
             this.name = name;
         }
 
@@ -62,7 +62,7 @@ public class InlineProperties extends S3DataType implements DynamicElementNS {
          * @param text
          *            to add
          */
-        public void addText(final String text) {
+        public void addText(String text) {
             final String value;
             if (properties.containsKey(name)) {
                 value = Stream.of(properties.getProperty(name), text).filter(Objects::nonNull)
@@ -91,7 +91,7 @@ public class InlineProperties extends S3DataType implements DynamicElementNS {
      * @return InlineProperty
      */
     @Override
-    public InlineProperty createDynamicElement(final String uri, final String localName, final String qName) {
+    public InlineProperty createDynamicElement(String uri, String localName, String qName) {
         return new InlineProperty(localName);
     }
 }

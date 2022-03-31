@@ -29,20 +29,13 @@ abstract class LoggingTask extends Task implements ProjectUtils {
     private int verbosity = Project.MSG_VERBOSE;
 
     /**
-     * Create a new {@link LoggingTask} instance.
-     */
-    protected LoggingTask() {
-        super();
-    }
-
-    /**
      * Create a new {@link LoggingTask} instance bound to the specified
      * {@link Project}.
      * 
      * @param project
+     *            Ant {@link Project}
      */
     protected LoggingTask(Project project) {
-        this();
         setProject(project);
     }
 
@@ -59,8 +52,9 @@ abstract class LoggingTask extends Task implements ProjectUtils {
      * Set whether this {@link Task} should operate with increased log output.
      *
      * @param verbose
+     *            flag
      */
-    public void setVerbose(final boolean verbose) {
+    public void setVerbose(boolean verbose) {
         verbosity = verbose ? Project.MSG_INFO : Project.MSG_VERBOSE;
     }
 
@@ -69,10 +63,12 @@ abstract class LoggingTask extends Task implements ProjectUtils {
      * {@link #isVerbose()}.
      *
      * @param format
+     *            {@link String}
      * @param args
+     *            format args
      * @see Formatter
      */
-    protected void log(final String format, final Object... args) {
+    protected void log(String format, Object... args) {
         log(verbosity, format, args);
     }
 
@@ -80,23 +76,30 @@ abstract class LoggingTask extends Task implements ProjectUtils {
      * Log a formatted message at the specified level.
      *
      * @param level
+     *            log level
      * @param format
+     *            {@link String}
      * @param args
+     *            format args
      * @see Formatter
      */
-    protected void log(final int level, final String format, final Object... args) {
+    protected void log(int level, String format, Object... args) {
         log(String.format(format, args), level);
     }
 
     /**
-     * Log a formatted message with accompanying/triggering {@link Throwable}.
+     * Log a formatted message at {@link Project#MSG_ERR} level with
+     * accompanying/triggering {@link Throwable}.
      *
      * @param t
+     *            {@link Throwable}
      * @param format
+     *            {@link String}
      * @param args
+     *            format args
      * @see Formatter
      */
-    protected void log(final Throwable t, final String format, final Object... args) {
+    protected void log(Throwable t, String format, Object... args) {
         log(Project.MSG_ERR, t, format, args);
     }
 
@@ -105,14 +108,16 @@ abstract class LoggingTask extends Task implements ProjectUtils {
      * a specific level.
      *
      * @param level
+     *            log level
      * @param t
+     *            {@link Throwable}
      * @param format
+     *            {@link String}
      * @param args
+     *            format args
      * @see Formatter
      */
-    protected void log(final int level, final Throwable t, final String format,
-        final Object... args) {
+    protected void log(int level, Throwable t, String format, Object... args) {
         log(String.format(format, args), t, level);
     }
-
 }

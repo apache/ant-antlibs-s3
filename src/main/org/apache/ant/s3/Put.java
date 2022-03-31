@@ -23,6 +23,7 @@ import java.util.Vector;
 import java.util.function.Supplier;
 
 import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Project;
 import org.apache.tools.ant.types.FilterChain;
 import org.apache.tools.ant.types.FilterSetCollection;
 import org.apache.tools.ant.types.Resource;
@@ -41,9 +42,20 @@ public class Put extends CopyResources {
     private String bucket;
 
     /**
+     * Create a new {@link Put} instance.
+     * 
+     * @param project
+     *            Ant {@link Project}
+     */
+    public Put(Project project) {
+        super(project);
+    }
+
+    /**
      * Add a configured {@link Client}.
      *
      * @param s3
+     *            {@link Client}
      */
     public void addConfigured(Client s3) {
         if (this.s3 != null) {
@@ -56,6 +68,7 @@ public class Put extends CopyResources {
      * Set the {@link Client} by reference.
      *
      * @param refid
+     *            of {@link Client}
      */
     public void setClientRefid(String refid) {
         Objects.requireNonNull(StringUtils.trimToNull(refid), "@clientrefid must not be null/empty/blank");
@@ -76,6 +89,7 @@ public class Put extends CopyResources {
      * Set the bucket to which target objects should be written.
      *
      * @param bucket
+     *            target
      */
     public void setBucket(String bucket) {
         this.bucket = StringUtils.trimToNull(bucket);
@@ -85,6 +99,7 @@ public class Put extends CopyResources {
      * Disable {@code append}.
      *
      * @param append
+     *            flag
      * @throws BuildException
      *             if {@code append == true}
      */
@@ -97,6 +112,7 @@ public class Put extends CopyResources {
      * Disable {@code preserveLastModified}.
      *
      * @param preserveLastModified
+     *            flag
      * @throws BuildException
      *             if {@code preserveLastModified == true}
      */
@@ -117,9 +133,10 @@ public class Put extends CopyResources {
     }
 
     /**
-     * Disable {@code overwrite}.
+     * Force {@code overwrite}.
      * 
      * @param overwrite
+     *            flag
      * @throws BuildException
      *             if {@code overwrite == false}
      */
