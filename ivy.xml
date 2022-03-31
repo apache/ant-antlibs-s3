@@ -32,7 +32,8 @@
   </info>
   <configurations defaultconfmapping="*->default">
     <conf name="default" description="full antlib with all dependencies" />
-    <conf name="provided" description="Ant must be present at runtime" />
+    <conf name="provided" description="Ant must be present at runtime" visibility="private" />
+    <conf name="sso" description="Optional SSO support" />
     <conf name="test" description="dependencies used for tests of the antlib" visibility="private" />
   </configurations>
   <publications xmlns:e="urn:ant.apache.org:ivy-extras">
@@ -55,15 +56,20 @@
   </publications>
   <dependencies defaultconfmapping="*->default">
     <dependency org="software.amazon.awssdk" name="s3" rev="${aws.sdk.version}" conf="default">
-      <exclude org="software.amazon.awssdk" name="apache-client" />
     </dependency>
     <dependency org="software.amazon.awssdk" name="url-connection-client" rev="${aws.sdk.version}" conf="default" />
+    <dependency org="software.amazon.awssdk" name="sts" rev="${aws.sdk.version}" conf="default" />
     <dependency org="org.apache.commons" name="commons-lang3" rev="3.12.0" conf="default" />
+    <dependency org="org.kohsuke.metainf-services" name="metainf-services" rev="1.8" conf="default" />
     <dependency org="org.apache.ant" name="ant" rev="1.10.12" conf="provided" />
     <dependency org="junit" name="junit" rev="4.13" conf="test" />
     <dependency org="com.adobe.testing" name="s3mock" rev="2.4.7" conf="test" />
     <dependency org="jakarta.servlet.jsp" name="jakarta.servlet.jsp-api" rev="2.3.6" conf="test" />
     <dependency org="org.apache.groovy" name="groovy-ant" rev="4.0.0" transitive="false" conf="test" />
     <dependency org="org.apache.groovy" name="groovy-jsr223" rev="4.0.0" conf="test" />
+    <dependency org="org.assertj" name="assertj-core" rev="3.22.0" conf="test" />
+    <dependency org="software.amazon.awssdk" name="aws-json-protocol" rev="${aws.sdk.version}" conf="sso" transitive="false" />
+    <dependency org="software.amazon.awssdk" name="sso" rev="${aws.sdk.version}" conf="sso" transitive="false" />
+    <exclude org="software.amazon.awssdk" artifact="apache-client" />
   </dependencies>
 </ivy-module>

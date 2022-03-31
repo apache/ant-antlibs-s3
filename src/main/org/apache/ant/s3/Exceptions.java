@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 /**
  * Utility class for the creation and throwing of {@link Exception}s.
  */
-class Exceptions {
+public class Exceptions {
 
     public static <E extends Exception> E create(final Function<? super String, ? extends E> fn, final String format,
         final Object... args) {

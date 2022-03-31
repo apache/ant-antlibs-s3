@@ -49,12 +49,11 @@
     project.setProperty('s3.endpoint', "https://localhost:${DEFAULT_HTTPS_PORT}")
   </groovy>
 
-  <s3:client id="s3">
-    <credentials accesskey="foo" secretkey="bar" />
-    <http>
+  <s3:client id="s3" endpointoverride="${s3.endpoint}" region="us-east-1">
+    <credentialsprovider accesskey="foo" secretkey="bar" />
+    <httpclient>
       <TRUST_ALL_CERTIFICATES>true</TRUST_ALL_CERTIFICATES>
-    </http>
-    <builder endpointOverride="${s3.endpoint}" region="us-east-1" />
+    </httpclient>
   </s3:client>
 
   <groovy>

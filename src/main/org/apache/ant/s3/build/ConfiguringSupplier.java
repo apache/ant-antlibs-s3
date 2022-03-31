@@ -6,7 +6,7 @@
  *  (the "License"); you may not use this file except in compliance with
  *  the License.  You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,25 +14,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.apache.ant.s3;
+package org.apache.ant.s3.build;
 
-import org.apache.ant.s3.build.RootConfiguringSupplier;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.types.DataType;
-
-import software.amazon.awssdk.services.s3.S3Client;
+import org.apache.ant.s3.build.ConfigurableSupplier.DynamicConfiguration;
 
 /**
- * {@link DataType} providing access to an {@link S3Client} instance.
+ * A {@link ConfigurableSupplier} that <em>is</em> its own
+ * {@code configuration}.
+ * 
+ * @param <T>
+ *            supplied type
  */
-public class Client extends RootConfiguringSupplier<S3Client> {
+public interface ConfiguringSupplier<T> extends DynamicConfiguration, ConfigurableSupplier<T> {
 
     /**
-     * Create a new {@link Client}.
-     *
-     * @param project Ant {@link Project}
+     * {@inheritDoc}
+     * 
+     * @return {@code this}
      */
-    public Client(Project project) {
-        super(project);
+    @Override
+    default DynamicConfiguration getConfiguration() {
+        return this;
     }
 }

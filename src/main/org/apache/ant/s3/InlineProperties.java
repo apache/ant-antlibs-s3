@@ -94,4 +94,13 @@ public class InlineProperties extends S3DataType implements DynamicElementNS {
     public InlineProperty createDynamicElement(String uri, String localName, String qName) {
         return new InlineProperty(localName);
     }
+
+    /**
+     * Get the managed {@link Properties} instance.
+     * 
+     * @return {@link Properties}
+     */
+    public Properties getProperties() {
+        return properties;
+    }
 }

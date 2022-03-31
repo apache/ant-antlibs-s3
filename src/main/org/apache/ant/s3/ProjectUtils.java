@@ -30,7 +30,7 @@ import org.apache.tools.ant.Project;
 /**
  * Interface providing behavior for Ant {@link Project} components.
  */
-interface ProjectUtils {
+public interface ProjectUtils {
 
     /**
      * Attempt to determine a component name for the specified type.
