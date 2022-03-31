@@ -122,6 +122,7 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
         final String prefix;
         final TokenizedPath path;
         final Set<TokenizedPattern> includes;
+        final Set<TokenizedPattern> excludes;
         final int maxDepth;
         final Iterator<CommonPrefix> prefixes;
         final Iterator<Atom<?>> contents;
@@ -135,11 +136,12 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
 
             path = finder.path(prefix.get());
             includes = finder.patterns.getLeft();
+            excludes = finder.patterns.getRight();
             maxDepth = includes.stream().mapToInt(
                 include -> include.containsPattern(SelectorUtils.DEEP_TREE_MATCH) ? Integer.MAX_VALUE : include.depth())
                 .max().orElse(Integer.MAX_VALUE);
 
-            if (includes.isEmpty()) {
+            if (includes.isEmpty() && excludes.isEmpty()) {
                 this.prefixes = prefixes.iterator();
             } else {
                 final int recurseDepth = path.depth() + (finder.includePrefixes ? 0 : 1);
@@ -161,7 +163,12 @@ class S3Finder implements Supplier<Optional<ObjectResource>> {
         }
 
         final boolean allowPrefix(CommonPrefix prefix) {
-            return includes.stream().anyMatch(p -> p.matchStartOf(finder.path(prefix.prefix()), finder.caseSensitive));
+            final TokenizedPath asPath = finder.path(prefix.prefix());
+            if (maxDepth == asPath.depth()
+                && excludes.stream().anyMatch(p -> p.matchPath(asPath, finder.caseSensitive))) {
+                return false;
+            }
+            return includes.stream().anyMatch(p -> p.matchStartOf(asPath, finder.caseSensitive));
         }
 
         final boolean allow(Atom<?> atom) {
