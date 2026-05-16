@@ -1,4 +1,18 @@
 notifications:
-  commits:      notifications@ant.apache.org
-  issues:       notifications@ant.apache.org
+  commits: notifications@ant.apache.org
+  issues: notifications@ant.apache.org
   pullrequests: dev@ant.apache.org
+github:
+  rulesets:
+    - name: "Default Branch Protection"
+      type: branch
+      branches:
+        includes:
+          - "~DEFAULT_BRANCH"
+          - "release/*"
+          - "rel/*"
+        excludes: []
+      bypass_teams:
+        - root
+      restrict_deletion: true
+      restrict_force_push: true
